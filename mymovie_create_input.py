@@ -27,13 +27,16 @@ class EntryMaker(object):
 
 
 class UserInterestEntryMaker(EntryMaker):
-    columns = ['user_id', 'timestamp', 'title_id', 'total_bid']
+    columns = ['user_id',
+               # 'timestamp',
+               'title_id', 'total_bid']
     user_bids = {}
 
     def format(self, _dict):
-        return "%s,%.2f,%s,%d\n" % \
+        # return "%s,%.2f,%s,%d\n" % \
+        return "%s,%s,%d\n" % \
                (_dict['user_id'],
-                _dict['timestamp'],
+                # _dict['timestamp'],
                 _dict['title_id'],
                 _dict['total_bid'])
 
@@ -47,23 +50,28 @@ class UserInterestEntryMaker(EntryMaker):
 
         return {
             'user_id': user_id,
-            'timestamp': BASE_TIME + np.random.randint(-1000, 1000) * 1000,
+            # 'timestamp': BASE_TIME + np.random.randint(-1000, 1000) * 1000,
             'title_id': title_ids[np.random.randint(0,len(title_dict)-1)],
             'total_bid': bid,
         }
 
 class CreateTimeSlotEntry(EntryMaker):
-    columns = ['user_id', 'timestamp', 'day']
+    columns = ['user_id',
+               # 'timestamp',
+               'day']
 
     def create(self, i):
         return {
             'user_id': user_ids[i % len(user_ids)],
-            'timestamp': BASE_TIME + np.random.randint(-1000, 1000) * 1000,
+            # 'timestamp': BASE_TIME + np.random.randint(-1000, 1000) * 1000,
             'day': datetime.datetime(year=2020, month=2, day=np.random.randint(1, 14))
         }
 
     def format(self, _dict):
-        return "%s,%.2f,%s\n" % (_dict['user_id'], _dict['timestamp'],
+        # return "%s,%.2f,%s\n" % \
+        return "%s,%s\n" % \
+               (_dict['user_id'],
+                                 # _dict['timestamp'],
                              datetime.datetime.strftime(_dict['day'], '%Y/%m/%d'))
 
 
