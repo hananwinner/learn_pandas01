@@ -1,0 +1,6 @@
+total_users: 2000
+user_interest_rows: 4000
+total_titles: 30
+user_timeslot_rows: 4000
+fixed_bid: 40
+min_group_bid: 1200
