@@ -3,24 +3,26 @@ import datetime
 import numpy as np
 
 
-NUM_USER = 100
-user_ids = [str(uuid.uuid4())[:7] for _ in range(NUM_USER)]
+class SampleDB(object):
+    def __init__(self, num_user, num_title):
+        self._config = {'num_user': num_user, 'num_title': num_title}
+        self._user_ids = [str(uuid.uuid4())[:7] for _ in
+                          range(self._config['num_user'])]
+        self._title_ids = [str(uuid.uuid4())[:7] for _ in
+                           range(self._config['num_title'])]
 
-titles = []
-with open('titles.csv', 'r') as fdr:
-    titles = fdr.readlines()
+    def get_user_ids(self):
+        return self._user_ids
 
-NUM_TITLE = 9
-title_ids = [str(uuid.uuid4())[:7] for i in range(NUM_TITLE)]
-title_dict = {id: titles[i] for i, id in enumerate(title_ids)}
-
-
-
-BASE_TIME = datetime.datetime(year=2020, month=1, day=6).timestamp()
+    def get_title_ids(self):
+        return self._title_ids
 
 
 class EntryMaker(object):
     columns = []
+
+    def __init__(self, db):
+        self._db = db
 
     def format_header(self):
         return ','.join(self.columns) + '\n'
@@ -28,55 +30,65 @@ class EntryMaker(object):
 
 class UserInterestEntryMaker(EntryMaker):
     columns = ['user_id',
-               # 'timestamp',
                'title_id', 'total_bid']
     user_bids = {}
 
-    def format(self, _dict):
-        # return "%s,%.2f,%s,%d\n" % \
+    def __init__(self, db,
+                 single_ticket_bid_low=40,
+                 single_ticket_bid_high=40,
+                 max_num_tickets=1):
+        super(UserInterestEntryMaker, self).__init__(db)
+        self._single_ticket_bid_low = single_ticket_bid_low
+        self._single_ticket_bid_high = single_ticket_bid_high
+        self._max_num_tickets = max_num_tickets
+
+    @staticmethod
+    def format(_dict):
         return "%s,%s,%d\n" % \
                (_dict['user_id'],
-                # _dict['timestamp'],
                 _dict['title_id'],
                 _dict['total_bid'])
 
     def create(self, i):
+        user_ids = self._db.get_user_ids()
+        title_ids = self._db.get_title_ids()
         user_id = user_ids[np.random.randint(0, len(user_ids) - 1)]
         if user_id in self.user_bids:
             bid = self.user_bids[user_id]
         else:
-            bid = np.random.randint(5, 100)
+            if self._single_ticket_bid_low == self._single_ticket_bid_high and \
+                    self._max_num_tickets == 1:
+                bid = self._single_ticket_bid_low
+            else:
+                bid = \
+                    np.random.randint(self._single_ticket_bid_low,
+                                      self._single_ticket_bid_high) * \
+                    np.random.randint(1, self._max_num_tickets)
             self.user_bids[user_id] = bid
 
         return {
             'user_id': user_id,
-            # 'timestamp': BASE_TIME + np.random.randint(-1000, 1000) * 1000,
-            'title_id': title_ids[np.random.randint(0,len(title_dict)-1)],
+            'title_id': title_ids[np.random.randint(0,len(title_ids)-1)],
             'total_bid': bid,
         }
 
+
 class CreateTimeSlotEntry(EntryMaker):
     columns = ['user_id',
-               # 'timestamp',
                'day']
 
     def create(self, i):
+        user_ids = self._db.get_user_ids()
         return {
             'user_id': user_ids[i % len(user_ids)],
-            # 'timestamp': BASE_TIME + np.random.randint(-1000, 1000) * 1000,
             'day': datetime.datetime(year=2020, month=2, day=np.random.randint(1, 14))
         }
 
-    def format(self, _dict):
-        # return "%s,%.2f,%s\n" % \
+    @staticmethod
+    def format(_dict):
         return "%s,%s\n" % \
                (_dict['user_id'],
-                                 # _dict['timestamp'],
                              datetime.datetime.strftime(_dict['day'], '%Y/%m/%d'))
-
-
-
-
 
 
 def create_file(filename, num_rows, entry_maker):
@@ -92,7 +104,7 @@ def create_file(filename, num_rows, entry_maker):
 
 
 if __name__ == "__main__":
-    create_file('user_interest.csv', 100, UserInterestEntryMaker())
-    create_file('user_timeslot.csv', 300, CreateTimeSlotEntry())
-
+    db = SampleDB(num_user=1000, num_title=30)
+    create_file('user_interest.csv', 3000, UserInterestEntryMaker(db))
+    create_file('user_timeslot.csv', 9000, CreateTimeSlotEntry(db))
 

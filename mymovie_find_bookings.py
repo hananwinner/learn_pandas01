@@ -3,10 +3,13 @@ import datetime
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+import logging
+from utils import make_logger
 
 
 def parse_day(day_str):
     return datetime.datetime.strptime(day_str, "%Y/%m/%d")
+
 
 def read_timeslot():
     df = pd.read_csv('user_timeslot.csv', index_col=['user_id'],
@@ -15,6 +18,7 @@ def read_timeslot():
                             'day': 'object'})
     df['day'] = df["day"].apply(parse_day)
     return df
+
 
 def read_user_interest():
     df = pd.read_csv('user_interest.csv', index_col=['user_id'],
@@ -25,13 +29,16 @@ def read_user_interest():
 
 
 class BidCalculator(object):
-    def __init__(self, minimal_bid, df_user_interest, df_user_timeslot):
+    def __init__(self, minimal_bid, df_user_interest, df_user_timeslot, **kwargs):
         self._df = None
         self._minimal_bid = minimal_bid
         self._df_user_interest = df_user_interest
         self._df_user_timeslot = df_user_timeslot
         self._bids_found = 0
         self._users_booked = 0
+        log_arg = kwargs.get("log")
+        log_level_arg = kwargs.get("log_level")
+        self._log = make_logger(log_arg, log_level_arg, clear_file=True)
 
     def _prepare_data(self):
         self._df = pd.merge(self._df_user_timeslot, self._df_user_interest, on=['user_id'])
@@ -47,8 +54,9 @@ class BidCalculator(object):
                 self._bids_found += 1
                 best_day, best_title_id = best_title_and_date
 
-                print('best_day', best_day)
-                print('best_title_id', best_title_id)
+                self._log.info('best_day', best_day.strftime("%Y/%m/%d"))
+                self._log.info('best_title_id', best_title_id)
+                self._log.info('bid', str(best_bid))
 
                 booked_users = set()
 
@@ -91,10 +99,10 @@ class BidCalculator(object):
 
     def _event_user_booked(self, user_id, day, title_id):
         self._users_booked += 1
-        print('event_user_booked', user_id, day, title_id)
+        self._log.debug('event_user_booked', user_id, day.strftime("%Y/%m/%d"), title_id)
 
     def _event_booking_canceled(self, user_id, day, title_id, reason=None):
-        print('event_booking_canceled', user_id, day, title_id, reason)
+        self._log.debug('event_booking_canceled', user_id, day.strftime("%Y/%m/%d"), title_id, reason)
 
     def main(self):
         self._prepare_data()
@@ -105,14 +113,5 @@ if __name__ == "__main__":
     interest = read_user_interest()
     timeslot = read_timeslot()
     min_bid = 1200
-    calc = BidCalculator(min_bid, interest, timeslot)
+    calc = BidCalculator(min_bid, interest, timeslot, log='.', log_level=logging.INFO)
     calc.main()
-
-
-
-
-
-
-
-
-
