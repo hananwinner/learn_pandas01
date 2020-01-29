@@ -18,8 +18,6 @@ class InputMaker(object):
                           range(self._config['num_user'])]
         self._title_ids = [str(uuid.uuid4())[:7] for _ in
                            range(self._config['num_title'])]
-        # self._BASE_TIME = base_time \
-        #                   or datetime.datetime(year=2020, month=1, day=6).timestamp()
 
     def get_user_ids(self):
         return self._user_ids
@@ -40,7 +38,6 @@ class EntryMaker(object):
 
 class UserInterestEntryMaker(EntryMaker):
     columns = ['user_id',
-               # 'timestamp',
                'title_id', 'total_bid']
     user_bids = {}
 
@@ -54,10 +51,8 @@ class UserInterestEntryMaker(EntryMaker):
         self._max_num_tickets = max_num_tickets
 
     def format(self, _dict):
-        # return "%s,%.2f,%s,%d\n" % \
         return "%s,%s,%d\n" % \
                (_dict['user_id'],
-                # _dict['timestamp'],
                 _dict['title_id'],
                 _dict['total_bid'])
 
@@ -80,29 +75,24 @@ class UserInterestEntryMaker(EntryMaker):
 
         return {
             'user_id': user_id,
-            # 'timestamp': BASE_TIME + np.random.randint(-1000, 1000) * 1000,
             'title_id': title_ids[np.random.randint(0,len(title_ids)-1)],
             'total_bid': bid,
         }
 
 class CreateTimeSlotEntry(EntryMaker):
     columns = ['user_id',
-               # 'timestamp',
                'day']
 
     def create(self, i):
         user_ids = self._db.get_user_ids()
         return {
             'user_id': user_ids[i % len(user_ids)],
-            # 'timestamp': BASE_TIME + np.random.randint(-1000, 1000) * 1000,
             'day': datetime.datetime(year=2020, month=2, day=np.random.randint(1, 14))
         }
 
     def format(self, _dict):
-        # return "%s,%.2f,%s\n" % \
         return "%s,%s\n" % \
                (_dict['user_id'],
-                                 # _dict['timestamp'],
                              datetime.datetime.strftime(_dict['day'], '%Y/%m/%d'))
 
 
