@@ -1,19 +1,11 @@
 import uuid
 import datetime
 import numpy as np
-import yaml
 
 
-class InputMaker(object):
-    def __init__(self,
-                 config_file=None, num_user=None, num_title=None):
-        self._config = {}
-        if config_file is not None:
-            self._config = yaml.load(open(config_file, "r"))
-        else:
-            self._config['num_user'] = num_user
-            self._config['num_title'] = num_title
-
+class SampleDB(object):
+    def __init__(self, num_user, num_title):
+        self._config = {'num_user': num_user, 'num_title': num_title}
         self._user_ids = [str(uuid.uuid4())[:7] for _ in
                           range(self._config['num_user'])]
         self._title_ids = [str(uuid.uuid4())[:7] for _ in
@@ -43,14 +35,15 @@ class UserInterestEntryMaker(EntryMaker):
 
     def __init__(self, db,
                  single_ticket_bid_low=40,
-                 single_ticket_bid_high=None,
+                 single_ticket_bid_high=40,
                  max_num_tickets=1):
         super(UserInterestEntryMaker, self).__init__(db)
         self._single_ticket_bid_low = single_ticket_bid_low
         self._single_ticket_bid_high = single_ticket_bid_high
         self._max_num_tickets = max_num_tickets
 
-    def format(self, _dict):
+    @staticmethod
+    def format(_dict):
         return "%s,%s,%d\n" % \
                (_dict['user_id'],
                 _dict['title_id'],
@@ -79,6 +72,7 @@ class UserInterestEntryMaker(EntryMaker):
             'total_bid': bid,
         }
 
+
 class CreateTimeSlotEntry(EntryMaker):
     columns = ['user_id',
                'day']
@@ -90,7 +84,8 @@ class CreateTimeSlotEntry(EntryMaker):
             'day': datetime.datetime(year=2020, month=2, day=np.random.randint(1, 14))
         }
 
-    def format(self, _dict):
+    @staticmethod
+    def format(_dict):
         return "%s,%s\n" % \
                (_dict['user_id'],
                              datetime.datetime.strftime(_dict['day'], '%Y/%m/%d'))
@@ -109,8 +104,7 @@ def create_file(filename, num_rows, entry_maker):
 
 
 if __name__ == "__main__":
-    db = InputMaker(config_file='test01.yml')
+    db = SampleDB(num_user=1000, num_title=30)
     create_file('user_interest.csv', 3000, UserInterestEntryMaker(db))
     create_file('user_timeslot.csv', 9000, CreateTimeSlotEntry(db))
-
 

@@ -10,6 +10,7 @@ from utils import make_logger
 def parse_day(day_str):
     return datetime.datetime.strptime(day_str, "%Y/%m/%d")
 
+
 def read_timeslot():
     df = pd.read_csv('user_timeslot.csv', index_col=['user_id'],
                      dtype={'user_id': 'object',
@@ -17,6 +18,7 @@ def read_timeslot():
                             'day': 'object'})
     df['day'] = df["day"].apply(parse_day)
     return df
+
 
 def read_user_interest():
     df = pd.read_csv('user_interest.csv', index_col=['user_id'],
@@ -113,12 +115,3 @@ if __name__ == "__main__":
     min_bid = 1200
     calc = BidCalculator(min_bid, interest, timeslot, log='.', log_level=logging.INFO)
     calc.main()
-
-
-
-
-
-
-
-
-

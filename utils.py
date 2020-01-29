@@ -1,9 +1,6 @@
-import logging
 import os
 import inspect
-
 import logging
-import sys
 
 _logger = logging.getLogger('root')
 FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
@@ -12,7 +9,6 @@ _logger.setLevel(logging.DEBUG)
 
 
 class LogWrapper():
-
     def __init__(self, logger):
         self.logger = logger
 
@@ -48,8 +44,9 @@ def make_logger(log_arg, log_level, clear_file=False):
             logger_name, _ = fname.split(sep='.')
             logger = logging.getLogger(logger_name)
             fpath = os.path.join(log_arg, logger_name + '.log')
-            with open(fpath, "w"):
-                pass
+            if clear_file:
+                with open(fpath, "w"):
+                    pass
             fh = logging.FileHandler(fpath)
             fh.setLevel(log_level or logging.INFO)
             logger.addHandler(fh)

@@ -29,7 +29,7 @@ class TestBidCalculator(TestCase):
                    total_titles,
                    user_timeslot_rows,
                    fixed_bid):
-        db = InputMaker(num_user=total_users, num_title=total_titles)
+        db = SampleDB(num_user=total_users, num_title=total_titles)
         create_file('user_interest.csv', user_interest_rows,
                     UserInterestEntryMaker(db, fixed_bid))
         create_file('user_timeslot.csv', user_timeslot_rows,
