@@ -34,8 +34,8 @@ class UserInterestEntryMaker(EntryMaker):
     user_bids = {}
 
     def __init__(self, db,
-                 single_ticket_bid_low=40,
-                 single_ticket_bid_high=40,
+                 single_ticket_bid_low=10,
+                 single_ticket_bid_high=10,
                  max_num_tickets=1):
         super(UserInterestEntryMaker, self).__init__(db)
         self._single_ticket_bid_low = single_ticket_bid_low

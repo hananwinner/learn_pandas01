@@ -43,14 +43,15 @@ def make_logger(log_arg, log_level, clear_file=False):
             _, fname = os.path.split(calframe[1][1])
             logger_name, _ = fname.split(sep='.')
             logger = logging.getLogger(logger_name)
-            fpath = os.path.join(log_arg, logger_name + '.log')
-            if clear_file:
-                with open(fpath, "w"):
-                    pass
-            fh = logging.FileHandler(fpath)
-            fh.setLevel(log_level or logging.INFO)
-            logger.addHandler(fh)
-            logger.setLevel(log_level or logging.INFO)
+            if len(logger.handlers) == 0:
+                fpath = os.path.join(log_arg, logger_name + '.log')
+                if clear_file:
+                    with open(fpath, "w"):
+                        pass
+                fh = logging.FileHandler(fpath)
+                fh.setLevel(log_level or logging.INFO)
+                logger.addHandler(fh)
+                logger.setLevel(log_level or logging.INFO)
             return LogWrapper(logger)
         else:
             # its a logger object, just use it

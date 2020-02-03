@@ -1,7 +1,7 @@
 total_users: 2000
 user_interest_rows: 4000
 total_titles: 30
-user_timeslot_rows: 4000
+user_timeslot_rows: 8000
 fixed_bid: 10
 min_group_bid: 300
-test_name: standard
+test_name: standard-too-flexible
