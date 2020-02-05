@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 if __name__ == '__main__':
-    df = pd.read_csv('variable_user_results.csv',
+    df = pd.read_csv('variable_user-2_results.csv',
                      # index_col=['total_users'],
             dtype={
                 'test_name': 'object' ,
@@ -34,6 +34,9 @@ if __name__ == '__main__':
     # df.so
     ax = plt.gca()
     df = df.sort_values(by='total_users')
-    # df.plot(kind='bar', x='total_users', y='result_total_money', color='red',ax=ax)
-    df.plot(kind='bar', x='total_users', y='result_total_users', color='blue', ax=ax)
-    plt.show()
+    # df.plot(kind='bar', x='total_users', y='process_duration', color='red',ax=ax)
+
+    df['user_percent'] = df['result_total_users'] / df['total_users'] * 100
+    df.plot(kind='bar', x='total_users', y='user_percent', color='blue', ax=ax)
+    plt.savefig('test/graphs/user_percent2.png')
+    # plt.show()
