@@ -78,7 +78,7 @@ class BidCalculator(object):
                 title = vals[0]
                 self._event_booking_canceled(user_id, day, title,
                                              reason="user already booked this day to another title")
-        self._df = self._df.dropna(how='all', subset=['total_bid'])
+        self._df.dropna(how='all', subset=['total_bid'], inplace=True)
 
     def clear_bookings(self, best_day, best_title_id, booked_users):
         self._df['total_bid'] = [
@@ -92,7 +92,7 @@ class BidCalculator(object):
                 title = vals[0]
                 self._event_user_booked(user_id, day, title)
                 booked_users.add(user_id)
-        self._df = self._df.dropna(how='all', subset=['total_bid'])
+        self._df.dropna(how='all', subset=['total_bid'], inplace=True)
 
     def group_bids(self):
         best = self._df.groupby(['day', 'title_id']).sum(columns=['total_bid'])

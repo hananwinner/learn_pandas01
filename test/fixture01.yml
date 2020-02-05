@@ -1,7 +1,8 @@
 total_users: 2000
-user_interest_rows: 4000
+user_interset_multiplier: 0.2
+user_timeslot_multiplier_per_day: 0.107
+time_period_days: 14
 total_titles: 30
-user_timeslot_rows: 4000
 fixed_bid: 10
 min_group_bid: 300
 test_name: standard

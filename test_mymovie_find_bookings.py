@@ -6,6 +6,7 @@ import logging
 import os
 import yaml
 import copy
+from config import Config
 
 
 class TestBidCalculator(TestCase):
@@ -86,22 +87,20 @@ class TestBidCalculator(TestCase):
     def test_num_users(self):
         base_config = {
             'total_users': -1,
-            'user_interest_rows': -1,
+            'user_interset_multiplier': 0.2,
+            'user_timeslot_multiplier_per_day': 0.107,
+            'time_period_days': 14,
             'total_titles': 5,
-            'user_timeslot_rows': -1,
             'fixed_bid': 10,
             'min_group_bid': 300,
-            'test_name': 'variable_user'
+            'test_name': 'variable_user-2'
         }
-        user_num_params = range(2000, 2500+1, 100)
-        user_timeslots_multiplier = 2
-        user_interest_multiplier = 1
+        user_num_params = range(5000, 5000+1, 100)
         configs = []
         for num_user in user_num_params:
             config = copy.copy(base_config)
             config['total_users'] = num_user
-            config['user_interest_rows'] = num_user*user_interest_multiplier
-            config['user_timeslot_rows'] = num_user*user_timeslots_multiplier
+            config = Config(config)
             configs.append(config)
         out_file = base_config['test_name'] + '_results.csv'
         for config in configs:
@@ -112,17 +111,22 @@ class TestBidCalculator(TestCase):
         base_path = 'test'
         configs = []
         for file in os.listdir(base_path):
-            with open(os.path.join(base_path,file), 'r') as fdr:
-                config = yaml.load(fdr)
-            configs.append(config)
+            full_path = os.path.join(base_path,file)
+            if os.path.isfile(full_path):
+                with open(full_path, 'r') as fdr:
+                    config = yaml.load(fdr)
+                config = Config(config)
+                configs.append(config)
         for config in configs:
             self._test_main(config)
 
     def _test_main(self, config, out_file='test_result.csv'):
         start_time = time.time()
-        self._gen_input(config['total_users'],
+        total_titles = config['total_titles']
+        total_users = config['total_users']
+        self._gen_input(total_users,
                         config['user_interest_rows'],
-                        config['total_titles'],
+                        total_titles,
                         config['user_timeslot_rows'],
                         config['fixed_bid'])
         start_read = time.time()
