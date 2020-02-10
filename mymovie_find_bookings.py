@@ -12,17 +12,21 @@ def parse_day(day_str):
 
 
 def read_timeslot():
-    df = pd.read_csv('user_timeslot.csv', index_col=['user_id'],
+    df = pd.read_csv('user_timeslot.csv',
                      dtype={'user_id': 'object',
                             'day': 'object'})
     df['day'] = df["day"].apply(parse_day)
+    df = df.drop_duplicates(subset=['user_id','day'])
+    df = df.set_index(keys=['user_id'])
     return df
 
 
 def read_user_interest():
-    df = pd.read_csv('user_interest.csv', index_col=['user_id'],
+    df = pd.read_csv('user_interest.csv',
                      dtype={'user_id': 'object',
                             'title_id': 'object', 'total_bid': 'int64'})
+    df = df.drop_duplicates(subset=['user_id','title_id'])
+    df = df.set_index(keys=['user_id'])
     return df
 
 
@@ -41,10 +45,14 @@ class BidCalculator(object):
 
     def _prepare_data(self):
         self._df = self._df_user_interest.join(self._df_user_timeslot)
+        self._df['status'] = 'A'
 
     def _calc(self):
         while True:
             best = self.group_bids()
+            if len(best) == 0:
+                break
+
             best_title_and_date = best.index[0]
             best_bid = best.loc[best_title_and_date, 'total_bid']
             if best_bid < self._minimal_bid:
@@ -58,46 +66,56 @@ class BidCalculator(object):
                 self._log.info('best_title_id', best_title_id)
                 self._log.info('bid', str(best_bid))
 
-                booked_users = set()
-                self.clear_bookings(best_day, best_title_id, booked_users)
+                self.mark_booked_and_canceled(best_day, best_title_id)
 
-                self.clear_booked_days(best_day, booked_users, best_title_id)
+    def mark_booked_and_canceled(self, day, title_id):
+        booked_users = set()
 
-    def clear_booked_days(self, best_day, booked_users, best_title):
-        self._df['total_bid'] = [
-            np.nan
-            if row[0] in booked_users and
-               (row[1][2] == best_day or row[1]['title_id'] == best_title)
-            else row[1][1]
+        self._df['status'] = [
+            'BN'  # booked now
+            if row[1]['day'] == day and row[1]['title_id'] == title_id and
+            row[1]['status'] == 'A'
+            else row[1]['status']
             for row in self._df.iterrows()
         ]
-        for ind, vals in self._df.iterrows():
-            if np.isnan(vals[1]):
-                user_id = ind
-                day = vals[2]
-                title = vals[0]
-                self._event_booking_canceled(user_id, day, title,
-                                             reason="user already booked this day to another title")
-        self._df.dropna(how='all', subset=['total_bid'], inplace=True)
 
-    def clear_bookings(self, best_day, best_title_id, booked_users):
-        self._df['total_bid'] = [
-            np.nan if row[1]['day'] == best_day and row[1][0] == best_title_id else row[1][1]
+        for row in self._df[self._df['status'] == 'BN'].iterrows():
+            user_id = row[0]
+            booked_users.add(user_id)
+            self._event_user_booked(user_id, row[1]['day'], row[1]['title_id'])
+
+        self._df['status'] = [
+            'CN'  # canceled now
+            if (row[1]['day'] == day or row[1]['title_id'] == title_id) and
+               row[0] in booked_users and row[1]['status'] == 'A'
+            else row[1]['status']
             for row in self._df.iterrows()
         ]
-        for ind, vals in self._df.iterrows():
-            if np.isnan(vals[1]):
-                user_id = ind
-                day = vals[2]
-                title = vals[0]
-                self._event_user_booked(user_id, day, title)
-                booked_users.add(user_id)
-        self._df.dropna(how='all', subset=['total_bid'], inplace=True)
+
+        for row in self._df[self._df['status'] == 'CN'].iterrows():
+            self._event_booking_canceled(row[0], row[1]['day'], row[1]['title_id'])
+
+        def _mark_now_to_general(status):
+            if status == 'BN':
+                return 'B'
+            elif status == 'CN':
+                return 'C'
+            else:
+                return status
+
+        self._df['status'] = self._df['status'].apply(_mark_now_to_general)
 
     def group_bids(self):
-        best = self._df.groupby(['day', 'title_id']).sum(columns=['total_bid'])
-        best = best.sort_values(by='total_bid', ascending=False)
-        return best
+
+        if (self._df['status'] == 'A').any():
+            best = \
+                self._df[self._df['status'] == 'A'].loc[:,['day', 'title_id','total_bid']]\
+                    .groupby(['day', 'title_id'])\
+                    .sum(columns=['total_bid']) \
+                    .sort_values(by='total_bid', ascending=False)
+            return best
+        else:
+            return pd.DataFrame()
 
     def _event_user_booked(self, user_id, day, title_id):
         self._users_booked += 1
@@ -109,8 +127,6 @@ class BidCalculator(object):
     def main(self):
         self._prepare_data()
         self._calc()
-
-
 
 
 if __name__ == "__main__":
