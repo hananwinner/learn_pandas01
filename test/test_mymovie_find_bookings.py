@@ -7,7 +7,7 @@ import os
 import yaml
 import copy
 from config import Config
-from common_testing import *
+from test.common_testing import *
 
 
 class TestBidCalculator(TestCase):
@@ -56,9 +56,9 @@ class TestBidCalculator(TestCase):
             'total_titles': 5,
             'fixed_bid': 10,
             'min_group_bid': 300,
-            'test_name': 'variable_user-3'
+            'test_name': 'variable_user-4'
         }
-        user_num_params = range(100, 5000+1, 100)
+        user_num_params = range(100, 1000+1, 100)
         configs = []
         for num_user in user_num_params:
             config = copy.copy(base_config)
@@ -71,7 +71,7 @@ class TestBidCalculator(TestCase):
 
 
     def _test_fixture_files(self):
-        base_path = 'test'
+        base_path = ''
         configs = []
         for file in os.listdir(base_path):
             full_path = os.path.join(base_path,file)
@@ -99,7 +99,7 @@ class TestBidCalculator(TestCase):
         read_duration = start_process - start_read
         min_group_bid = config['min_group_bid']
         calc = BidCalculator(min_group_bid, self._interest, self._timeslot,
-                             log='.', log_level=logging.DEBUG)
+                             log='.', log_level=logging.INFO)
         calc.main()
         end_process = time.time()
         process_duration = end_process - start_process

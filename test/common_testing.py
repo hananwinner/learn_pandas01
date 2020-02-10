@@ -17,7 +17,7 @@ def log_test_result(
                     'result_num_group', 'result_total_users',
                     'result_total_money',
                     ]
-    test_result_filename = out_file
+    test_result_filename =  out_file
     if not os.path.exists(test_result_filename):
         with open(test_result_filename, 'w') as fdnew:
             fdnew.write(','.join(test_columns) + '\n')

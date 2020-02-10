@@ -1,8 +1,9 @@
 from unittest import TestCase
 from mymovie_find_bookings import *
-from common_testing import *
+from test.common_testing import *
 import time
 import pandas as pd
+import datetime
 
 
 class CorrectnessTest(TestCase):
@@ -24,7 +25,7 @@ class CorrectnessTest(TestCase):
             'user_id': pd.Series([1, 1]),
             'day': pd.Series(['2020/02/02','2020/02/01',])
         })
-        _timeslot['day'] = _timeslot["day"].apply(parse_day)
+        _timeslot['day'] = _timeslot["day"].apply(CorrectnessTest.parse_day)
         _timeslot = _timeslot.set_index(keys=['user_id'])
         return _interest, _timeslot
 
@@ -46,7 +47,7 @@ class CorrectnessTest(TestCase):
         calc.main()
         # end_process = time.time()
         # process_duration = end_process - start_process
-        out_file = 'correctness_test.csv'
+        out_file = 'logs/correctness_test.csv'
         log_test_result(
             start_time, -1, -1,
             -1, -1, -1,
@@ -90,7 +91,7 @@ class CorrectnessTest(TestCase):
                                   '2020/02/01',
                                   ])
             })
-            _timeslot['day'] = _timeslot["day"].apply(parse_day)
+            _timeslot['day'] = _timeslot["day"].apply(CorrectnessTest.parse_day)
             _timeslot = _timeslot.set_index(keys=['user_id'])
             return _interest, _timeslot
 
