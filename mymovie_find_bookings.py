@@ -39,6 +39,7 @@ class BidCalculator(object):
         self._bids_found = 0
         self._total_bids = 0
         self._users_booked = 0
+        self._total_unique_users = 0
         log_arg = kwargs.get("log")
         log_level_arg = kwargs.get("log_level")
         self._log = make_logger(log_arg, log_level_arg, clear_file=True)
@@ -50,14 +51,9 @@ class BidCalculator(object):
     def _calc(self):
         while True:
             best = self.group_bids()
-            if len(best) == 0:
-                break
-
-            best_title_and_date = best.index[0]
-            best_bid = best.loc[best_title_and_date, 'total_bid']
-            if best_bid < self._minimal_bid:
-                break
-            else:
+            if len(best) and best.loc[best.index[0], 'total_bid'] > self._minimal_bid:
+                best_title_and_date = best.index[0]
+                best_bid = best.loc[best.index[0], 'total_bid']
                 self._bids_found += 1
                 self._total_bids += best_bid
                 best_day, best_title_id = best_title_and_date
@@ -67,6 +63,12 @@ class BidCalculator(object):
                 self._log.info('bid', str(best_bid))
 
                 self.mark_booked_and_canceled(best_day, best_title_id)
+            else:
+                break
+        self._on_finish_stats()
+
+    def _on_finish_stats(self):
+        self._total_unique_users = self._df[self._df['status'] == 'B'].index.nunique()
 
     def mark_booked_and_canceled(self, day, title_id):
         booked_users = set()
