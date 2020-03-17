@@ -1,0 +1,1266 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: MyMovie Service
+Resources:
+  RestApiCaller:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: MyMovieRestApi_Caller
+  IAMLambdaServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaServiceRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+  IAMAPIServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaAPIServiceRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: apigateway.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+      - PolicyName: API_Service_Role_Policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Action: lambda:InvokeFunction
+            Resource: arn:aws:lambda:eu-west-1:987471261617:function:test-*
+            Effect: Allow
+  GetMoviesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-getMovies
+      Description: Function to Get movies list
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.get_movies
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  GetUserActiveBidsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-GetUserActiveBids
+      Description: returns the list of active user bids in the system
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.get_user_active_bids
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  AddOrUpdateUserBidFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-AddOrUpdateUserBid
+      Description: Add a bid on a movie or replace existing one
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.add_or_update_user_bid
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  CancelUserBidFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-cancelUserBid
+      Description: Cancel a bid on title
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.cancel_user_bid
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  GetUserTimeslotsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-getUserTimeslots
+      Description: Returns the list of the active timeslots of the user
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.get_user_timeslots
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  DeleteUserTimeslotsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-deleteUserTimeslots
+      Description: cancel all the active timeslots
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.delete_user_timeslots
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  AddOrUpdateUserTimeslotsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-addOrUpdateUserTimeslots
+      Description: add or update time-slots
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.add_or_update_user_timeslots
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  AddUserTimeslotFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-addUserTimeslot
+      Description: add day to timeslots or create timeslots for one day with default
+        user preferences
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.add_user_timeslot
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  DeleteUserTimeslotFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-deleteUserTimeslot
+      Description: cancel a day from timeslots
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.delete_user_timeslot
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  GetUserTimeslotPreferencesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-getUserTimeslotPreferences
+      Description: get the preferences of the user for general timeslots that he sets
+        as available for booking
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.get_user_timeslot_preferences
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  UpdateUserTimeslotPreferencesFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-UpdateUserTimeslotPreferences
+      Description: update or override the default timeslot preferences
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.update_user_timeslot_preferences
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  GetShowEventsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-getShowEvents
+      Description: Returns the list of show events that are available to join
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.get_show_events
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  BuyUserTicketFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-buyUserTicket
+      Description: Buy tickets for event for user
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.buy_user_ticket
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  GetUserBookingsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-getUserBookings
+      Description: Returns list of all upcoming bookings
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.get_user_bookings
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  DeleteUserBookingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-DeleteUserBooking
+      Description: cancel a booking
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie.zip
+      Handler: test_mymovie.delete_user_booking
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  MyMovieRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      ApiKeySourceType: HEADER
+      Name: MyMovie REST API
+      Description: MyMovie REST API
+      Body:
+        swagger: '2.0'
+        info:
+          description: API to movies list
+          version: 1.0.0
+          title: movies API
+        schemes:
+          - https
+        securityDefinitions:
+          sigv4:
+            type: apiKey
+            name: Authorization
+            in: header
+            x-amazon-apigateway-authtype: awsSigv4
+        definitions:
+          Title:
+            properties:
+              _id:
+                type: string
+              name:
+                type: string
+          Titles:
+            type: array
+            items:
+              "$ref": "#/definitions/Title"
+          ShowEventStatus:
+            type: string
+            enum:
+            - ALL
+            - AVAILABLE
+            - CANCELED
+            - FULL
+          ShowEvent:
+            properties:
+              _id:
+                type: string
+              title:
+                "$ref": "#/definitions/Title"
+              show_event_date:
+                "$ref": "#/definitions/ShowEventDate"
+              status:
+                "$ref": "#/definitions/ShowEventStatus"
+              num_tickets_available:
+                type: integer
+              ticket_price:
+                type: number
+                format: float
+          ShowEvents:
+            type: array
+            items:
+              "$ref": "#/definitions/ShowEvent"
+          ShowEventDate:
+            properties:
+              day:
+                type: string
+                format: date
+          TicketBid:
+            properties:
+              ticket_bid:
+                type: number
+                format: float
+                minimum: 5
+                maximum: 1000
+              num_tickets:
+                type: integer
+                default: 1
+                minimum: 1
+                maximum: 500
+          Bid:
+            required:
+            - title
+            - ticket_bid
+            properties:
+              title:
+                "$ref": "#/definitions/Title"
+              ticket_bid:
+                "$ref": "#/definitions/TicketBid"
+              from:
+                type: string
+                format: date
+              to:
+                type: string
+                format: date
+              is_preapp:
+                type: boolean
+                default: true
+              status:
+                "$ref": "#/definitions/BidStatus"
+          BidStatus:
+            type: string
+            enum:
+            - AVAILABLE
+            - BOOKED
+            - CANCELED_BY_USER
+            - CANCELED_OTHER_TIMESLOT_BOOKED
+            - CANCELED_OTHER
+            - EXPIRED
+          Booking:
+            properties:
+              _id:
+                type: string
+              bid:
+                "$ref": "#/definitions/Bid"
+              show_event:
+                "$ref": "#/definitions/ShowEvent"
+              status:
+                type: string
+                enum:
+                - BOOKED
+                - NEED_APPROVE
+                - CANCELED
+          Bookings:
+            type: array
+            items:
+              "$ref": "#/definitions/Booking"
+          Bids:
+            type: array
+            items:
+              "$ref": "#/definitions/Bid"
+          TimeSlotDay:
+            properties:
+              show_event_date:
+                "$ref": "#/definitions/ShowEventDate"
+              is_preapp:
+                type: boolean
+                default: true
+              status:
+                "$ref": "#/definitions/BidStatus"
+          TimeSlotDays:
+            type: array
+            items:
+              "$ref": "#/definitions/TimeSlotDay"
+          TimeSlotPreferences:
+            properties:
+              is_preapp:
+                type: boolean
+                default: true
+              all_or_any:
+                type: string
+                default: OR
+                enum:
+                - OR
+                - ANY
+          Error:
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+        responses:
+          UserDoesNotExistResponse:
+            description: the user does not exist
+          BidDoesNotExistResponse:
+            description: The bid does not exists for user, or the user does not exist
+          Standard500ErrorResponse:
+            description: Server Error
+            schema:
+              "$ref": "#/definitions/Error"
+        parameters:
+          pageSize:
+            name: pageSize
+            in: query
+            type: integer
+            description: Number of presons returned
+          pageNumber:
+            name: pageNumber
+            in: query
+            description: pageNumber
+            type: integer
+          event_id:
+            in: path
+            name: event_id
+            required: true
+            type: string
+          booking_id:
+            in: path
+            name: booking_id
+            required: true
+            type: string
+          username:
+            in: path
+            name: username
+            required: true
+            type: string
+            pattern: "[a-z0-9]{8,64}"
+            minLength: 8
+            maxLength: 64
+          title_id:
+            in: path
+            name: title_id
+            required: true
+            type: string
+          day:
+            in: path
+            name: day
+            required: true
+            type: string
+            format: date
+          from:
+            name: from
+            type: string
+            format: date
+            in: query
+            required: false
+          to:
+            type: string
+            name: to
+            format: date
+            in: query
+            required: false
+          show_event_status:
+            in: query
+            name: show_event_status
+            type: string
+            required: false
+            enum:
+            - ALL
+            - AVAILABLE
+          booking_status:
+            name: booking_status
+            in: query
+            type: string
+            enum:
+            - BOOKED
+            - NEED_APPROVE
+            - CANCELED
+        paths:
+          "/{username}/bids":
+            parameters:
+            - "$ref": "#/parameters/username"
+            get:
+              description: returns the list of active user bids in the system
+              summary: get active bids
+              responses:
+                '200':
+                  description: Returns list of active bids
+                  schema:
+                    "$ref": "#/definitions/Bids"
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: GetUserActiveBidsFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+            post:
+              description: Add a bid on a movie or replace existing one
+              summary: Add/update bid
+              parameters:
+              - name: bid
+                in: body
+                schema:
+                  "$ref": "#/definitions/Bid"
+              responses:
+                '204':
+                  description: Bid added successfully
+                '400':
+                  description: Bid could not be added
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+                - sigv4: []
+              x-amazon-apigateway-integration:
+                parameters:
+                  - "$ref": "#/parameters/username"
+                responses:
+                  default:
+                    statusCode: '204'
+
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: AddOrUpdateUserBidFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/{username}/bids/{title_id}":
+            parameters:
+            - "$ref": "#/parameters/username"
+            - "$ref": "#/parameters/title_id"
+            delete:
+              description: Cacnel a bid on title
+              summary: cancel bid
+              responses:
+                '204':
+                  description: user deleted succesfully
+                '404':
+                  "$ref": "#/responses/BidDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: CancelUserBidFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/{username}/timeslots":
+            parameters:
+            - "$ref": "#/parameters/username"
+            get:
+              description: Returns the list of the active timeslots of the user
+              summary: get timeslots available in this period
+              responses:
+                '200':
+                  description: Return object with list of days, and additional attributes
+                    (or/any, is_preapp)
+                  schema:
+                    "$ref": "#/definitions/TimeSlotDays"
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: GetUserTimeslotsFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+            delete:
+              description: cancel all the active timeslots
+              summary: cancel active timeslots
+              responses:
+                '204':
+                  description: active timeslots are all canceled
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: DeleteUserTimeslotsFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+            post:
+              description: add the time-slots for the user or override exisiting
+                ones
+              summary: add or update time-slots
+              parameters:
+              - name: timeslots
+                in: body
+                schema:
+                  "$ref": "#/definitions/TimeSlotDays"
+              responses:
+                '204':
+                  description: timeslots updated successfully for user
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: AddOrUpdateUserTimeslotsFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/{username}/timeslot":
+            parameters:
+            - "$ref": "#/parameters/username"
+            post:
+              description: add day to timeslots or create timeslots for one day
+                with default user preferences
+              summary: add day to timeslots
+              parameters:
+              - name: day
+                in: body
+                schema:
+                  "$ref": "#/definitions/TimeSlotDay"
+              responses:
+                '204':
+                  description: the day was added as available for user, or it already
+                    was available
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: AddUserTimeslotFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/{username}/timeslot/{day}":
+            parameters:
+            - "$ref": "#/parameters/username"
+            - "$ref": "#/parameters/day"
+            delete:
+              summary: cancel a day from timeslots
+              description: Cancel a day from timeslots
+              responses:
+                '204':
+                  description: the day is now no longer available for the user (deleted
+                    or did not exist anyway)
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: DeleteUserTimeslotFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/{username}/preferences/timeslot":
+            parameters:
+            - "$ref": "#/parameters/username"
+            get:
+              description: get the preferences of the user for general timeslots
+                that he sets as available for booking
+              summary: get timeslot preferences
+              responses:
+                '200':
+                  description: the user preferences
+                  schema:
+                    "$ref": "#/definitions/TimeSlotPreferences"
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: GetUserTimeslotPreferencesFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+            put:
+              description: update or override the default timeslot preferences
+              summary: update timeslot preferences
+              parameters:
+              - name: timeslot_preferences
+                in: body
+                schema:
+                  "$ref": "#/definitions/TimeSlotPreferences"
+              responses:
+                '204':
+                  description: the user timeslot preferences was updated successfully.
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: UpdateUserTimeslotPreferencesFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/titles":
+            get:
+              description: Returns list of all titles by filter (deafult for time
+                until next weekend)
+              summary: get titles
+              parameters:
+              - name: from
+                type: string
+                format: date
+                in: query
+                required: false
+              - name: to
+                type: string
+                format: date
+                in: query
+                required: false
+              responses:
+                '200':
+                  description: successfully returned the titles
+                  schema:
+                    "$ref": "#/definitions/Titles"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: GetMoviesFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/show_events":
+            get:
+              description: Returns the list of show events that are available to
+                join
+              summary: list of show events available
+              parameters:
+              - "$ref": "#/parameters/to"
+              - "$ref": "#/parameters/from"
+              - "$ref": "#/parameters/show_event_status"
+              responses:
+                '200':
+                  description: succesfully returned list of show events
+                  schema:
+                    "$ref": "#/definitions/ShowEvents"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: GetShowEventsFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/show_events/{event_id}/buy_ticket/{username}":
+            parameters:
+            - "$ref": "#/parameters/event_id"
+            - "$ref": "#/parameters/username"
+            post:
+              description: Buy tickets for event
+              summary: buy tickets for event
+              parameters:
+              - name: ticket_bid
+                in: body
+                schema:
+                  "$ref": "#/definitions/TicketBid"
+                required: true
+              responses:
+                '200':
+                  description: Succssfully booked
+                  schema:
+                    "$ref": "#/definitions/Booking"
+                '404':
+                  description: the event does not exist
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: BuyUserTicketFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/{username}/bookings":
+            parameters:
+            - "$ref": "#/parameters/username"
+            get:
+              description: Returns list of all upcoming bookings
+              summary: get bookings
+              parameters:
+              - "$ref": "#/parameters/to"
+              - "$ref": "#/parameters/from"
+              - "$ref": "#/parameters/booking_status"
+              responses:
+                '200':
+                  description: list of upocming bookings
+                  schema:
+                    "$ref": "#/definitions/Bookings"
+                '404':
+                  "$ref": "#/responses/UserDoesNotExistResponse"
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: GetUserBookingsFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+          "/{username}/bookings/{booking_id}":
+            parameters:
+            - "$ref": "#/parameters/username"
+            - "$ref": "#/parameters/booking_id"
+            delete:
+              description: cancel a booking
+              summary: cancel a booking
+              responses:
+                '204':
+                  description: the booking is canceled or was already canceled or
+                '404':
+                  description: user or booking does not exists
+                '500':
+                  "$ref": "#/responses/Standard500ErrorResponse"
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: DeleteUserBookingFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: AWS
+  RestAPICallerManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    DependsOn:
+    - MyMovieRestApi
+    - RestApiCaller
+    Properties:
+      Description: MyMovie API Caller
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: RestAPICaller001
+          Effect: Allow
+          Action: execute-api:Invoke
+          Resource:
+            Fn::Join:
+            - ''
+            - - 'arn:aws:execute-api:'
+              - Ref: AWS::Region
+              - ":"
+              - Ref: AWS::AccountId
+              - ":"
+              - Ref: MyMovieRestApi
+              - "/*/*/*"
+      Users:
+      - MyMovieRestApi_Caller
+      ManagedPolicyName: MyMovie_API_Caller_Policy
+  GetMoviesLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Join:
+        - ''
+        - - "/aws/lambda/"
+          - test-mymovie
+  ApiGatewayCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - apigateway.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: API_GW_Logs_Policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:DescribeLogGroups
+            - logs:DescribeLogStreams
+            - logs:PutLogEvents
+            - logs:GetLogEvents
+            - logs:FilterLogEvents
+            Resource: "*"
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn:
+        Fn::GetAtt:
+        - ApiGatewayCloudWatchLogsRole
+        - Arn
+  RestAPIStage:
+    Type: AWS::ApiGateway::Stage
+    DependsOn:
+    - ApiGatewayAccount
+    Properties:
+      DeploymentId:
+        Ref: RestAPIDeployment
+      MethodSettings:
+      - DataTraceEnabled: true
+        HttpMethod: "*"
+        LoggingLevel: INFO
+        ResourcePath: "/*"
+      RestApiId:
+        Ref: MyMovieRestApi
+      StageName: dev2
+  RestAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+    - MyMovieRestApi
+    Properties:
+      RestApiId:
+        Ref: MyMovieRestApi
+      StageName: dummy
