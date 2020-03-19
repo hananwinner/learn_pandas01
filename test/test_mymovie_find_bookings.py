@@ -51,14 +51,14 @@ class TestBidCalculator(TestCase):
         base_config = {
             'total_users': -1,
             'user_interset_multiplier': 0.2,
-            'user_timeslot_multiplier_per_day': 0.107,
+            'user_timeslot_multiplier_per_day': 0.143,
             'time_period_days': 14,
-            'total_titles': 5,
+            'total_titles': 20,
             'fixed_bid': 10,
             'min_group_bid': 300,
-            'test_name': 'variable_user-4'
+            'test_name': 'variable_user-20_titles'
         }
-        user_num_params = range(100, 1000+1, 100)
+        user_num_params = range(500, 5000+1, 500)
         configs = []
         for num_user in user_num_params:
             config = copy.copy(base_config)
@@ -108,4 +108,5 @@ class TestBidCalculator(TestCase):
                               gen_input_duration, read_duration, process_duration,
                               config,
                               calc._bids_found, calc._users_booked, calc._total_bids,
+            calc._total_unique_users,
                                 out_file)

@@ -52,7 +52,7 @@ class CorrectnessTest(TestCase):
             start_time, -1, -1,
             -1, -1, -1,
             config,
-            calc._bids_found, calc._users_booked, calc._total_bids,
+            calc._bids_found, calc._users_booked, calc._total_bids, calc._total_unique_users,
             out_file)
 
 

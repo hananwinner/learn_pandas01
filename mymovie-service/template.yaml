@@ -6,10 +6,10 @@ Resources:
     Type: AWS::IAM::User
     Properties:
       UserName: MyMovieRestApi_Caller
-  IAMLambdaServiceRole:
+  IAMGatewayLambdaServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: LambdaServiceRole
+      RoleName: GatewayLambdaServiceRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -153,7 +153,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   GetUserActiveBidsFunction:
@@ -169,7 +169,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   AddOrUpdateUserBidFunction:
@@ -185,7 +185,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   CancelUserBidFunction:
@@ -201,7 +201,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   GetUserTimeslotsFunction:
@@ -217,7 +217,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   DeleteUserTimeslotsFunction:
@@ -233,7 +233,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   AddOrUpdateUserTimeslotsFunction:
@@ -249,7 +249,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   AddUserTimeslotFunction:
@@ -266,7 +266,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   DeleteUserTimeslotFunction:
@@ -282,7 +282,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   GetUserTimeslotPreferencesFunction:
@@ -299,7 +299,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   UpdateUserTimeslotPreferencesFunction:
@@ -315,7 +315,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   GetShowEventsFunction:
@@ -331,7 +331,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   BuyUserTicketFunction:
@@ -347,7 +347,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   GetUserBookingsFunction:
@@ -363,7 +363,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   DeleteUserBookingFunction:
@@ -379,7 +379,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   MyMovieRestApi:

@@ -1,0 +1,257 @@
+Resources:
+  MoviesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: movies
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+      - AttributeName: title_id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: title_id
+        KeyType: HASH
+  IAMLambdaServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaServiceRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+      - PolicyName: LambdaServiceRolePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Action: dynamodb:Scan
+            Resource: arn:aws:dynamodb:eu-west-1:987471261617:table/movies
+            Effect: Allow
+  IAMAPIServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaAPIServiceRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: apigateway.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+      - PolicyName: API_Service_Role_Policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Action: lambda:InvokeFunction
+            Resource:
+              Fn::GetAtt:
+              - APIFunction
+              - Arn
+            Effect: Allow
+  APIFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: getMovies
+      Description: Function to Get movies list
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: get_movies.zip
+      Handler: get_movies.lambda_handler
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+        - IAMLambdaServiceRole
+        - Arn
+      Timeout: 60
+  RestAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      ApiKeySourceType: HEADER
+      Description: API to get movies
+      Name: movies API
+      EndpointConfiguration:
+        Types:
+        - REGIONAL
+      Body:
+        swagger: '2.0'
+        info:
+          description: API to movies list
+          version: 1.0.0
+          title: movies API
+        schemes:
+        - https
+        paths:
+          "/": {}
+          "/movies":
+            get:
+              description: get the list of movies available to bid for tickets now
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: successfully returns the list
+                  schema:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - title_id
+                      - title_name
+                      properties:
+                        title_id:
+                          type: string
+                        title_name:
+                          type: string
+                '400':
+                  description: Invalid request
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+              security:
+              - sigv4: []
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: '200'
+                uri:
+                  Fn::Join:
+                  - ":"
+                  - - arn:aws:apigateway
+                    - Ref: AWS::Region
+                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+                    - Ref: AWS::Region
+                    - Ref: AWS::AccountId
+                    - function
+                    - Fn::Join:
+                      - ''
+                      - - Ref: APIFunction
+                        - "/invocations"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                credentials:
+                  Fn::GetAtt:
+                  - IAMAPIServiceRole
+                  - Arn
+                type: aws
+        securityDefinitions:
+          sigv4:
+            type: apiKey
+            name: Authorization
+            in: header
+            x-amazon-apigateway-authtype: awsSigv4
+        definitions:
+          Empty:
+            type: object
+            title: Empty Schema
+  RestAPICaller:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: getMovies_Caller
+  RestAPICallerManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    DependsOn:
+    - RestAPI
+    - APIFunction
+    - RestAPICaller
+    Properties:
+      Description: getMovies API Caller
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: RestAPICaller001
+          Effect: Allow
+          Action: execute-api:Invoke
+          Resource:
+            Fn::Join:
+            - ''
+            - - 'arn:aws:execute-api:'
+              - Ref: AWS::Region
+              - ":"
+              - Ref: AWS::AccountId
+              - ":"
+              - Ref: RestAPI
+              - "/*/GET/*"
+      Users:
+      - getMovies_Caller
+      ManagedPolicyName: API_Caller_Policy
+  GetMoviesLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn: APIFunction
+    Properties:
+      LogGroupName:
+        Fn::Join:
+        - ''
+        - - "/aws/lambda/"
+          - Ref: APIFunction
+  ApiGatewayCloudWatchLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - apigateway.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: API_GW_Logs_Policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:DescribeLogGroups
+            - logs:DescribeLogStreams
+            - logs:PutLogEvents
+            - logs:GetLogEvents
+            - logs:FilterLogEvents
+            Resource: "*"
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn:
+        Fn::GetAtt:
+        - ApiGatewayCloudWatchLogsRole
+        - Arn
+  RestAPIStage:
+    Type: AWS::ApiGateway::Stage
+    DependsOn:
+    - ApiGatewayAccount
+    Properties:
+      DeploymentId:
+        Ref: RestAPIDeployment
+      MethodSettings:
+      - DataTraceEnabled: true
+        HttpMethod: "*"
+        LoggingLevel: INFO
+        ResourcePath: "/*"
+      RestApiId:
+        Ref: RestAPI
+      StageName: dev3
+  RestAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+    - RestAPI
+    Properties:
+      RestApiId:
+        Ref: RestAPI
+      StageName: dummy
