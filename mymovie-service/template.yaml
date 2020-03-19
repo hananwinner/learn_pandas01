@@ -20,6 +20,18 @@ Resources:
           Action: sts:AssumeRole
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyName: test-mymovie-GatewayLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                - dynamodb:GetItem
+                - sns:Publish
+                Resource:
+                  - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
+                  - arn:aws:sns:eu-west-1:987471261617:topic-test-mymovie-client_data
+                Effect: Allow
   IAMAPIServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -52,12 +64,12 @@ Resources:
       AttributeDefinitions:
       - AttributeName: title_id
         AttributeType: S
-      - AttributeName: title_name
-        AttributeType: S
-      - AttributeName: from
-        AttributeType: S
-      - AttributeName: to
-        AttributeType: S
+#      - AttributeName: title_name
+#        AttributeType: S
+#      - AttributeName: from
+#        AttributeType: S
+#      - AttributeName: to
+#        AttributeType: S
       KeySchema:
       - AttributeName: title_id
         KeyType: HASH
@@ -71,8 +83,8 @@ Resources:
       AttributeDefinitions:
         - AttributeName: user_id
           AttributeType: S
-        - AttributeName: username
-          AttributeType: S
+#        - AttributeName: username
+#          AttributeType: S
       KeySchema:
         - AttributeName: user_id
           KeyType: HASH
@@ -89,8 +101,6 @@ Resources:
       KeySchema:
         - AttributeName: user_id_title_id
           KeyType: HASH
-
-
   UserTimeslotsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -1352,7 +1362,7 @@ Resources:
         ResourcePath: "/*"
       RestApiId:
         Ref: MyMovieRestApi
-      StageName: dev4
+      StageName: dev5
   RestAPIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
