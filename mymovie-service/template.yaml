@@ -42,6 +42,94 @@ Resources:
           - Action: lambda:InvokeFunction
             Resource: arn:aws:lambda:eu-west-1:987471261617:function:test-*
             Effect: Allow
+  TitlesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: test-mymovie-titles
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+      - AttributeName: title_id
+        AttributeType: S
+      - AttributeName: title_name
+        AttributeType: S
+      - AttributeName: from
+        AttributeType: S
+      - AttributeName: to
+        AttributeType: S
+      KeySchema:
+      - AttributeName: title_id
+        KeyType: HASH
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: test-mymovie-users
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: username
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+  UserBidsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: test-mymovie-user-bids
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+        - AttributeName: user_id_title_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id_title_id
+          KeyType: HASH
+
+
+  UserTimeslotsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: test-mymovie-user-timeslots
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+  ShowEventTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: test-mymovie-show-event
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+        - AttributeName: show_event_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: show_event_id
+          KeyType: HASH
+  UserBookingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: test-mymovie-user-bookings
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
   GetMoviesFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -439,16 +527,15 @@ Resources:
                 type: string
               messages:
                 type: array
-                item: string
-        responses:
-          UserDoesNotExistResponse:
-            description: the user does not exist
-          BidDoesNotExistResponse:
-            description: The bid does not exists for user, or the user does not exist
-          Standard500ErrorResponse:
-            description: Server Error
-            schema:
-              "$ref": "#/definitions/Error"
+                item: string        
+#          Error:
+#            description: the user does not exist
+#          Error:
+#            description: The bid does not exists for user, or the user does not exist
+#          Error:
+#            description: Server Error
+#            schema:
+#              "$ref": "#/definitions/Error"
         parameters:
           pageSize:
             name: pageSize
@@ -530,9 +617,9 @@ Resources:
                   schema:
                     "$ref": "#/definitions/Bids"
                 '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -574,11 +661,9 @@ Resources:
                 '204':
                   description: Bid added successfully
                 '400':
-                  description: Bid could not be added
-                '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
                 - sigv4: []
               x-amazon-apigateway-integration:
@@ -587,9 +672,16 @@ Resources:
                 requestTemplates:
                   application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 400
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '204'
-
+                    statusCode: 204
                 uri:
                   Fn::Join:
                   - ":"
@@ -622,9 +714,9 @@ Resources:
                 '204':
                   description: user deleted succesfully
                 '404':
-                  "$ref": "#/responses/BidDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -665,9 +757,9 @@ Resources:
                   schema:
                     "$ref": "#/definitions/TimeSlotDays"
                 '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -702,9 +794,9 @@ Resources:
                 '204':
                   description: active timeslots are all canceled
                 '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -745,9 +837,9 @@ Resources:
                 '204':
                   description: timeslots updated successfully for user
                 '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -792,9 +884,9 @@ Resources:
                   description: the day was added as available for user, or it already
                     was available
                 '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -834,9 +926,9 @@ Resources:
                   description: the day is now no longer available for the user (deleted
                     or did not exist anyway)
                 '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -877,9 +969,9 @@ Resources:
                   schema:
                     "$ref": "#/definitions/TimeSlotPreferences"
                 '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -919,9 +1011,9 @@ Resources:
                 '204':
                   description: the user timeslot preferences was updated successfully.
                 '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -971,7 +1063,7 @@ Resources:
                   schema:
                     "$ref": "#/definitions/Titles"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -1014,7 +1106,7 @@ Resources:
                   schema:
                     "$ref": "#/definitions/ShowEvents"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -1063,7 +1155,7 @@ Resources:
                 '404':
                   description: the event does not exist
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -1107,9 +1199,9 @@ Resources:
                   schema:
                     "$ref": "#/definitions/Bookings"
                 '404':
-                  "$ref": "#/responses/UserDoesNotExistResponse"
+                  "$ref": "#/definitions/Error"
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
@@ -1150,7 +1242,7 @@ Resources:
                 '404':
                   description: user or booking does not exists
                 '500':
-                  "$ref": "#/responses/Standard500ErrorResponse"
+                  "$ref": "#/definitions/Error"
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
