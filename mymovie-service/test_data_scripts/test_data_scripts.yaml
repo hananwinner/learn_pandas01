@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: functions to fill dynamodb tables with test data
+Resources:
+  IAMTestDataFillRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: TestDataFillLambdaRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyName: test-mymovie-test-data-LambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - dynamodb:PutItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                Resource:
+                  - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
+                Effect: Allow
+  TestDataTitleFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-mymovie-test-data-titles
+      Runtime: python3.8
+      Description: Fill Title Table with data
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: fill_titles.zip
+      Handler: fill_titles.fill_titles
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+          - IAMTestDataFillRole
+          - Arn
+      Timeout: 60

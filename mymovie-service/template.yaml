@@ -32,6 +32,32 @@ Resources:
                   - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
                   - arn:aws:sns:eu-west-1:987471261617:topic-test-mymovie-client_data
                 Effect: Allow
+  IAMCommitLambdaServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: GatewayLambdaServiceRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyName: test-mymovie-GatewayLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - dynamodb:PutItem
+#                  - sns:Subscribe
+                Resource:
+                  - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
+#                  - arn:aws:sns:eu-west-1:987471261617:topic-test-mymovie-client_data
+                Effect: Allow
   IAMAPIServiceRole:
     Type: AWS::IAM::Role
     Properties:
