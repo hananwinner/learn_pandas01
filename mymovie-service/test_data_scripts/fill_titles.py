@@ -9,7 +9,7 @@ def fill_titles(event, context):
     clear = event['clear'] if 'clear' in event else True
 
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('test-mymovie-titles')
+    table = dynamodb.Table('test-mymovie-titles-v2')
 
     if clear:
         scan = table.scan(

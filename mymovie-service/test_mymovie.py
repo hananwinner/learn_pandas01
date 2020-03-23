@@ -1,6 +1,8 @@
 import json
 import boto3
-from datetime import datetime
+from datetime import datetime, timedelta
+
+from boto3.dynamodb.conditions import Key
 
 
 class Model:
@@ -51,7 +53,7 @@ def validate_title_not_expired(title_id):
 
 def fetch_title_dates(title_id):
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('test-mymovie-titles')
+    table = dynamodb.Table('test-mymovie-titles-v2')
     response = table.get_item(
         Key={
             'title_id': title_id
@@ -132,11 +134,58 @@ def calc_gen_result(exist_status_or_none, new_status, payload=None):
         return False, gen_client_error([message])
 
 
+SERVER_ERROR_API_GATEWAY_REGEX = "server_error"
+
+class ServerErrorException(Exception):
+    def __init__(self):
+        super().__init__(SERVER_ERROR_API_GATEWAY_REGEX)
+
+def server_error_decorator(endpoint):
+
+    def _server_error_block(*args, **kwargs):
+        try:
+            endpoint(args, kwargs)
+        except Exception as ex:
+            raise ServerErrorException()
+
+    return _server_error_block
+
+@server_error_decorator
 def get_movies(event, context):
-    return {
-        'statusCode': 200,
-        'body': 'body'
-    }
+    now = datetime.now()
+    two_weeks_before = now - timedelta(days=14)
+    now_str = datetime.strftime(now, "%Y-%m-%d")
+    two_weeks_before_str = datetime.strftime(two_weeks_before, "%Y-%m-%d")
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test-mymovie-titles-v2')
+
+    response = table.query(
+        IndexName='from',
+        Select='ALL_ATTRIBUTES',
+        Limit=100,
+        ReturnConsumedCapacity='NONE',
+        # KeyConditions={
+        #     '#f': {
+        #         'AttributeValueList': [
+        #            two_weeks_before_str, now_str
+        #         ],
+        #         'ComparisonOperator': 'BETWEEN'
+        #     }
+        # },
+        # ProjectionExpression='string',
+        KeyConditionExpression=Key('#f').between(two_weeks_before_str, now_str),
+        ExpressionAttributeNames={
+            '#f': 'from'
+        }
+    )
+
+    return response['Items']
+
+
+
+    
+
+
 
 
 def get_user_active_bids(event, context):

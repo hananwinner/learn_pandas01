@@ -35,7 +35,7 @@ Resources:
   IAMCommitLambdaServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: GatewayLambdaServiceRole
+      RoleName: CommitLambdaServiceRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -83,7 +83,7 @@ Resources:
   TitlesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: test-mymovie-titles
+      TableName: test-mymovie-titles-v2
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
@@ -92,20 +92,36 @@ Resources:
         AttributeType: S
 #      - AttributeName: title_name
 #        AttributeType: S
-#      - AttributeName: from
-#        AttributeType: S
+      - AttributeName: from
+        AttributeType: S
 #      - AttributeName: to
 #        AttributeType: S
       KeySchema:
       - AttributeName: title_id
         KeyType: HASH
+      - AttributeName: from
+        KeyType: RANGE
+#      GlobalSecondaryIndexes:
+#        - IndexName: title-from-index
+#          KeySchema:
+#            - AttributeName: title_id
+#              KeyType: HASH
+#            - AttributeName: from
+#              KeyType: RANGE
+#          Projection:
+#            NonKeyAttributes:
+#              - title_name
+#            ProjectionType: INCLUDE
+#          ProvisionedThroughput:
+#            ReadCapacityUnits: 5
+#            WriteCapacityUnits: 5
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: test-mymovie-users
       ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
       AttributeDefinitions:
         - AttributeName: user_id
           AttributeType: S
@@ -119,8 +135,8 @@ Resources:
     Properties:
       TableName: test-mymovie-user-bids
       ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
       AttributeDefinitions:
         - AttributeName: user_id_title_id
           AttributeType: S
@@ -431,9 +447,15 @@ Resources:
         definitions:
           Title:
             properties:
-              _id:
+              title_id:
                 type: string
               name:
+                type: string
+              year:
+                type: number
+              from:
+                type: string
+              to:
                 type: string
           Titles:
             type: array
