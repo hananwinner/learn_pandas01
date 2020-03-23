@@ -27,10 +27,37 @@ Resources:
             Statement:
               - Action:
                 - dynamodb:GetItem
+                -
                 - sns:Publish
                 Resource:
                   - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
                   - arn:aws:sns:eu-west-1:987471261617:topic-test-mymovie-client_data
+                Effect: Allow
+  IAMGetterLambdaServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: test-mymovie-GetterLambdaServiceRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyName: test-mymovie-GatewayLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchGetItem
+                Resource: arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
                 Effect: Allow
   IAMCommitLambdaServiceRole:
     Type: AWS::IAM::Role
@@ -195,7 +222,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGatewayLambdaServiceRole
+        - IAMGetterLambdaServiceRole
         - Arn
       Timeout: 60
   GetUserActiveBidsFunction:
@@ -211,7 +238,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGatewayLambdaServiceRole
+        - IAMGetterLambdaServiceRole
         - Arn
       Timeout: 60
   AddOrUpdateUserBidFunction:
@@ -259,7 +286,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGatewayLambdaServiceRole
+        - IAMGetterLambdaServiceRole
         - Arn
       Timeout: 60
   DeleteUserTimeslotsFunction:
@@ -341,7 +368,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGatewayLambdaServiceRole
+        - IAMGetterLambdaServiceRole
         - Arn
       Timeout: 60
   UpdateUserTimeslotPreferencesFunction:
@@ -373,7 +400,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGatewayLambdaServiceRole
+        - IAMGetterLambdaServiceRole
         - Arn
       Timeout: 60
   BuyUserTicketFunction:
@@ -405,7 +432,7 @@ Resources:
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGatewayLambdaServiceRole
+        - IAMGetterLambdaServiceRole
         - Arn
       Timeout: 60
   DeleteUserBookingFunction:
