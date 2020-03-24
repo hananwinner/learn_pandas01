@@ -53,7 +53,7 @@ def validate_title_not_expired(title_id):
 
 def fetch_title_dates(title_id):
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('test-mymovie-titles-v2')
+    table = dynamodb.Table('test-mymovie-titles')
     response = table.get_item(
         Key={
             'title_id': title_id
@@ -137,62 +137,50 @@ def calc_gen_result(exist_status_or_none, new_status, payload=None):
 SERVER_ERROR_API_GATEWAY_REGEX = "server_error"
 
 class ServerErrorException(Exception):
-    def __init__(self):
+    def __init__(self, inner_ex):
+        if inner_ex is not None:
+            print(inner_ex)
         super().__init__(SERVER_ERROR_API_GATEWAY_REGEX)
 
 def server_error_decorator(endpoint):
 
     def _server_error_block(*args, **kwargs):
         try:
-            endpoint(args, kwargs)
+            return endpoint(args, kwargs)
         except Exception as ex:
-            raise ServerErrorException()
+            raise ServerErrorException(ex)
 
     return _server_error_block
 
 @server_error_decorator
 def get_movies(event, context):
-    now = datetime.now()
-    two_weeks_before = now - timedelta(days=14)
-    now_str = datetime.strftime(now, "%Y-%m-%d")
-    two_weeks_before_str = datetime.strftime(two_weeks_before, "%Y-%m-%d")
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('test-mymovie-titles-v2')
-
+    table = dynamodb.Table('test-mymovie-titles')
     response = table.query(
-        IndexName='from',
-        Select='ALL_ATTRIBUTES',
+        IndexName='expired-index',
+        Select='ALL_PROJECTED_ATTRIBUTES',
         Limit=100,
         ReturnConsumedCapacity='NONE',
-        # KeyConditions={
-        #     '#f': {
-        #         'AttributeValueList': [
-        #            two_weeks_before_str, now_str
-        #         ],
-        #         'ComparisonOperator': 'BETWEEN'
-        #     }
-        # },
-        # ProjectionExpression='string',
-        KeyConditionExpression=Key('#f').between(two_weeks_before_str, now_str),
-        ExpressionAttributeNames={
-            '#f': 'from'
-        }
+        KeyConditionExpression=Key('expired').eq(0)
     )
-
     return response['Items']
 
 
-
-    
-
-
-
-
+@server_error_decorator
 def get_user_active_bids(event, context):
-    return {
-        'statusCode': 200,
-        'body': 'body'
-    }
+    user_id = get_user_name(event)
+
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test-mymovie-user-bids')
+    user_id_av = "{}_{}".format(user_id, 'AVAILABLE')
+    response = table.query(
+        IndexName='user_id_status',
+        Select='ALL_PROJECTED_ATTRIBUTES',
+        Limit=100,
+        ReturnConsumedCapacity='NONE',
+        KeyConditionExpression=Key('user_id_status').eq(user_id_av)
+    )
+    return response['Items']
 
 
 def add_or_update_user_bid(event, context):
@@ -227,12 +215,27 @@ def cancel_user_bid(event, context):
         send_sns(Topic.BID_UPDATED, payload)
     return json.dumps(result)
 
+status_enum = \
+    ['AVAILABLE', 'BOOKED', 'CANCELED_BY_USER', 'CANCELED_OTHER_TIMESLOT_BOOKED', 'CANCELED_OTHER', 'EXPIRED' ]
 
+@server_error_decorator
 def get_user_timeslots(event, context):
-    return {
-        'statusCode': 200,
-        'body': 'body'
-    }
+    user_id = get_user_name(event)
+
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test-mymovie-user-timeslots')
+
+    possible_user_vals = \
+        ["{}_{}".format(user_id,status) for status in status_enum if status not in ['EXPIRED']]
+
+    response = table.query(
+        IndexName='user_id_status',
+        Select='ALL_PROJECTED_ATTRIBUTES',
+        Limit=100,
+        ReturnConsumedCapacity='NONE',
+        KeyConditionExpression=Key('user_id_status').is_in(possible_user_vals)
+    )
+    return response['Items']
 
 
 def delete_user_timeslots(event, context):

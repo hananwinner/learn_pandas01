@@ -43,6 +43,9 @@ def commit_client_data(event, context):
             },
             'is_preapp': {
                 'BOOL': is_preapp
+            },
+            'user_id_status': {
+                'S': "{}_{}".format(user_id, status)
             }
         },
 

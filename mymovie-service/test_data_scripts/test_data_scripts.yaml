@@ -44,3 +44,36 @@ Resources:
           - IAMTestDataFillRole
           - Arn
       Timeout: 60
+
+  TestDataBidFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-mymovie-test-data-bids
+      Runtime: python3.8
+      Description: Fill Bids Table with data
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: fill_titles.zip
+      Handler: fill_titles.fill_bids
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+          - IAMTestDataFillRole
+          - Arn
+      Timeout: 60
+  TestFillTimeslotFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-mymovie-test-fill-timeslots
+      Runtime: python3.8
+      Description: Fill Timeslots Table with data
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: fill_titles.zip
+      Handler: fill_titles.fill_timeslots
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+          - IAMTestDataFillRole
+          - Arn
+      Timeout: 60

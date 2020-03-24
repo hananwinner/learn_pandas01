@@ -35,22 +35,14 @@ def fill_titles(event, context):
         for i in range(num_titles):
             table.put_item(
                 Item={
-                    'title_id':
-                        str(uuid.uuid4())[:7]
-                    ,
-                    'title_name':
-                        str(uuid.uuid4())[:15]
-                    ,
-                    'from':
-                        _from if i < num_titles/2 else expired_from
-                    ,
+                    'title_id': str(uuid.uuid4())[:7],
+                    'title_name': str(uuid.uuid4())[:15],
+                    'from': _from if i < num_titles/2 else expired_from,
                     'to': _to if i < num_titles/2 else expired_to,
                     'expired': 0 if i < num_titles/2 else 1
-
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='NONE',
-                # ExpressionAttributeNames={'#f': 'from', '#t': 'to'},
             )
 
 
@@ -78,42 +70,20 @@ def fill_bids(event, context):
             for j in range(bid_per_user):
                 title_id = titles[j % len(titles)]
                 table.put_item(
-                    # TableName='test-mymovie-user-bids',
                     Item={
-                        'user_id_title_id': "{}_{}".format(user_id, title_id)
-                        ,
-                        'user_id':
-                            'S': user_id
-                        },
-                        'title_id': {
-                            'S': title_id
-                        },
-                        'status': {
-                            'S': 'AVAILABLE'
-                        },
-                        'num_tickets': {
-                            'N': '1'
-                        },
-                        'ticket_bid': {
-                            'N': '10'
-                        },
-                        'from': {
-                            'S': _from
-                        },
-                        'to': {
-                            'S': _to
-                        },
-                        'is_preapp': {
-                            'BOOL': True
-                        },
-                        'user_id_status': {
-                            'S': "{}_{}".format(user_id, 'AVAILABLE')
-                        }
+                        'user_id_title_id': "{}_{}".format(user_id, title_id),
+                        'user_id': user_id,
+                        'title_id': title_id,
+                        'status': 'AVAILABLE',
+                        'num_tickets': '1',
+                        'ticket_bid': '10',
+                        'from': _from,
+                        'to': _to,
+                        'is_preapp': True,
+                        'user_id_status': "{}_{}".format(user_id, 'AVAILABLE')
                     },
-
                     ReturnValues='NONE',
                     ReturnConsumedCapacity='NONE',
-                    # ExpressionAttributeNames={'#f': 'from', '#t': 'to', '#s': 'status'},
                 )
 
 
@@ -140,31 +110,17 @@ def fill_timeslots(event, context):
         for i in range(num_users):
             user_id = str(uuid.uuid4())[:7]
             for j in range(ts_per_user):
+                status = status_enum[random.randint(0, len(status_enum)-1)]
                 table.put_item(
-                    # TableName='test-mymovie-user-bids',
                     Item={
-                        'user_id': {
-                            'S': user_id
-                        },
-                        'day': {
-                            'S': datetime.strftime(datetime.now() + timedelta(days=random.randint(1, 14)),
-                                                   "%Y-%m-%d")
-                        },
-                        'status': {
-                            'S': 'AVAILABLE'
-                        },
-                        'is_preapp': {
-                            'BOOL': True
-                        },
-                        'user_id_status': {
-                            'S': "{}_{}"
-                                .format(user_id,
-                                        status_enum[random.randint(0,len(status_enum)-1)])
-                        }
+                        'user_id': user_id,
+                        'day': datetime.strftime(datetime.now() + timedelta(days=random.randint(1, 14)),
+                                                   "%Y-%m-%d"),
+                        'status': status,
+                        'is_preapp': True,
+                        'user_id_status':
+                            "{}_{}".format(user_id, status)
                     },
-
                     ReturnValues='NONE',
                     ReturnConsumedCapacity='NONE',
-                    # ExpressionAttributeNames={'#f': 'from', '#t': 'to', '#s': 'status'},
                 )
-

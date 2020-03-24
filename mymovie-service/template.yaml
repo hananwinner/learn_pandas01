@@ -27,7 +27,6 @@ Resources:
             Statement:
               - Action:
                 - dynamodb:GetItem
-                -
                 - sns:Publish
                 Resource:
                   - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
@@ -110,7 +109,7 @@ Resources:
   TitlesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: test-mymovie-titles-v2
+      TableName: test-mymovie-titles
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
@@ -121,6 +120,8 @@ Resources:
 #        AttributeType: S
       - AttributeName: from
         AttributeType: S
+      - AttributeName: expired
+        AttributeType: N
 #      - AttributeName: to
 #        AttributeType: S
       KeySchema:
@@ -128,20 +129,18 @@ Resources:
         KeyType: HASH
       - AttributeName: from
         KeyType: RANGE
-#      GlobalSecondaryIndexes:
-#        - IndexName: title-from-index
-#          KeySchema:
-#            - AttributeName: title_id
-#              KeyType: HASH
-#            - AttributeName: from
-#              KeyType: RANGE
-#          Projection:
-#            NonKeyAttributes:
-#              - title_name
-#            ProjectionType: INCLUDE
-#          ProvisionedThroughput:
-#            ReadCapacityUnits: 5
-#            WriteCapacityUnits: 5
+      GlobalSecondaryIndexes:
+        - IndexName: expired-index
+          KeySchema:
+            - AttributeName: expired
+              KeyType: HASH
+          Projection:
+            NonKeyAttributes:
+              - title_name
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -167,22 +166,71 @@ Resources:
       AttributeDefinitions:
         - AttributeName: user_id_title_id
           AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: from
+          AttributeType: S
+        - AttributeName: num_tickets
+          AttributeType: N
+        - AttributeName: ticket_bid
+          AttributeType: N
+        - AttributeName: is_preapp
+          AttributeType: N
+        - AttributeName: user_id_status
+          AttributeType: S
       KeySchema:
         - AttributeName: user_id_title_id
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: user_id_status
+          KeySchema:
+            - AttributeName: user_id_status
+              KeyType: HASH
+          Projection:
+            NonKeyAttributes:
+              - title_id
+              - num_tickets
+              - ticket_bid
+              - from
+              - status
+              - is_preapp
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
   UserTimeslotsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: test-mymovie-user-timeslots
       ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
       AttributeDefinitions:
         - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: user_id_status
           AttributeType: S
       KeySchema:
         - AttributeName: user_id
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: user_id_status
+          KeySchema:
+            - AttributeName: user_id_status
+              KeyType: HASH
+          Projection:
+            NonKeyAttributes:
+              - day
+              - status
+              - is_preapp
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
   ShowEventTable:
     Type: AWS::DynamoDB::Table
     Properties:
