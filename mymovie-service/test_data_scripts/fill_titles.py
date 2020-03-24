@@ -1,6 +1,17 @@
 import boto3
 import uuid
 from datetime import datetime, timedelta
+import random
+
+
+def _clear(table, index_name):
+    scan = table.scan(
+        ProjectionExpression=index_name
+    )
+
+    with table.batch_writer() as batch:
+        for each in scan['Items']:
+            batch.delete_item(Key=each)
 
 
 def fill_titles(event, context):
@@ -9,19 +20,16 @@ def fill_titles(event, context):
     clear = event['clear'] if 'clear' in event else True
 
     dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.Table('test-mymovie-titles-v2')
+    table = dynamodb.Table('test-mymovie-titles')
 
     if clear:
-        scan = table.scan(
-            ProjectionExpression='title_id'
-        )
-
-        with table.batch_writer() as batch:
-            for each in scan['Items']:
-                batch.delete_item(Key=each)
+        _clear(table, 'title_id')
 
     _from = datetime.strftime(datetime.now(), "%Y-%m-%d")
     _to = datetime.strftime(datetime.now() + timedelta(days=14), "%Y-%m-%d")
+
+    expired_to = datetime.strftime(datetime.now() - timedelta(days=1), "%Y-%m-%d")
+    expired_from = datetime.strftime(datetime.now() - timedelta(days=15), "%Y-%m-%d")
 
     with table.batch_writer() as batch:
         for i in range(num_titles):
@@ -34,11 +42,129 @@ def fill_titles(event, context):
                         str(uuid.uuid4())[:15]
                     ,
                     'from':
-                        _from
+                        _from if i < num_titles/2 else expired_from
                     ,
-                    'to': _to
+                    'to': _to if i < num_titles/2 else expired_to,
+                    'expired': 0 if i < num_titles/2 else 1
+
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='NONE',
                 # ExpressionAttributeNames={'#f': 'from', '#t': 'to'},
             )
+
+
+def fill_bids(event, context):
+    clear = event['clear'] if 'clear' in event else True
+
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test-mymovie-user-bids')
+
+    if clear:
+        _clear(table, 'user_id_title_id')
+
+    num_users = event['num_users'] if 'num_users' in event else 100
+    bid_per_user = event['bid_per_user'] if 'bid_per_user' in event else 2
+    num_av_titles = 10
+
+    _from = datetime.strftime(datetime.now(), "%Y-%m-%d")
+    _to = datetime.strftime(datetime.now() + timedelta(days=14), "%Y-%m-%d")
+
+    titles = [str(uuid.uuid4())[:15] for _ in range(num_av_titles)]
+
+    with table.batch_writer() as batch:
+        for i in range(num_users):
+            user_id = str(uuid.uuid4())[:7]
+            for j in range(bid_per_user):
+                title_id = titles[j % len(titles)]
+                table.put_item(
+                    # TableName='test-mymovie-user-bids',
+                    Item={
+                        'user_id_title_id': "{}_{}".format(user_id, title_id)
+                        ,
+                        'user_id':
+                            'S': user_id
+                        },
+                        'title_id': {
+                            'S': title_id
+                        },
+                        'status': {
+                            'S': 'AVAILABLE'
+                        },
+                        'num_tickets': {
+                            'N': '1'
+                        },
+                        'ticket_bid': {
+                            'N': '10'
+                        },
+                        'from': {
+                            'S': _from
+                        },
+                        'to': {
+                            'S': _to
+                        },
+                        'is_preapp': {
+                            'BOOL': True
+                        },
+                        'user_id_status': {
+                            'S': "{}_{}".format(user_id, 'AVAILABLE')
+                        }
+                    },
+
+                    ReturnValues='NONE',
+                    ReturnConsumedCapacity='NONE',
+                    # ExpressionAttributeNames={'#f': 'from', '#t': 'to', '#s': 'status'},
+                )
+
+
+def fill_timeslots(event, context):
+    clear = event['clear'] if 'clear' in event else True
+
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test-mymovie-user-timeslots')
+
+    if clear:
+        _clear(table, 'user_id')
+
+    num_users = event['num_users'] if 'num_users' in event else 50
+    ts_per_user = event['ts_per_user'] if 'ts_per_user' in event else 2
+
+    _from = datetime.strftime(datetime.now(), "%Y-%m-%d")
+    _to = datetime.strftime(datetime.now() + timedelta(days=14), "%Y-%m-%d")
+
+    status_enum = \
+        ['AVAILABLE', 'EXPIRED']
+        # ['AVAILABLE', 'BOOKED', 'CANCELED_BY_USER', 'CANCELED_OTHER_TIMESLOT_BOOKED', 'CANCELED_OTHER', 'EXPIRED' ]
+
+    with table.batch_writer() as batch:
+        for i in range(num_users):
+            user_id = str(uuid.uuid4())[:7]
+            for j in range(ts_per_user):
+                table.put_item(
+                    # TableName='test-mymovie-user-bids',
+                    Item={
+                        'user_id': {
+                            'S': user_id
+                        },
+                        'day': {
+                            'S': datetime.strftime(datetime.now() + timedelta(days=random.randint(1, 14)),
+                                                   "%Y-%m-%d")
+                        },
+                        'status': {
+                            'S': 'AVAILABLE'
+                        },
+                        'is_preapp': {
+                            'BOOL': True
+                        },
+                        'user_id_status': {
+                            'S': "{}_{}"
+                                .format(user_id,
+                                        status_enum[random.randint(0,len(status_enum)-1)])
+                        }
+                    },
+
+                    ReturnValues='NONE',
+                    ReturnConsumedCapacity='NONE',
+                    # ExpressionAttributeNames={'#f': 'from', '#t': 'to', '#s': 'status'},
+                )
+
