@@ -1,0 +1,13 @@
+class Model:
+    class Bid:
+        class Status:
+            AVAILABLE = "AVAILABLE"
+            CANCELED_BY_USER = "CANCELED_BY_USER"
+            BOOKED = "BOOKED"
+            CANCELED_OTHER_TIMESLOT_BOOKED = "CANCELED_OTHER_TIMESLOT_BOOKED"
+            CANCELED_OTHER = "CANCELED_OTHER"
+            EXPIRED = "EXPIRED"
+
+
+status_enum = \
+    ['AVAILABLE', 'BOOKED', 'CANCELED_BY_USER', 'CANCELED_OTHER_TIMESLOT_BOOKED', 'CANCELED_OTHER', 'EXPIRED' ]

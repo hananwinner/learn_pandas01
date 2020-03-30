@@ -1,6 +1,6 @@
 from unittest import TestCase
-from mymovie_find_bookings import *
-from test.common_testing import *
+from aggregator.mymovie_find_bookings import *
+from aggregator.test.common_testing import *
 import time
 import pandas as pd
 import datetime

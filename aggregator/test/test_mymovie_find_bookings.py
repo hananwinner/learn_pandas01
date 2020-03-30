@@ -1,13 +1,12 @@
 from unittest import TestCase
-from mymovie_find_bookings import *
+from aggregator.mymovie_find_bookings import *
 import time
-from mymovie_create_input import *
+from aggregator.mymovie_create_input import *
 import logging
-import os
 import yaml
 import copy
-from config import Config
-from test.common_testing import *
+from aggregator.config import Config
+from aggregator.test.common_testing import *
 
 
 class TestBidCalculator(TestCase):

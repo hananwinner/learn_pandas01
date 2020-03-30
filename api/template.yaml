@@ -26,63 +26,13 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Action:
-                - dynamodb:GetItem
-                - sns:Publish
-                Resource:
-                  - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
-                  - arn:aws:sns:eu-west-1:987471261617:topic-test-mymovie-client_data
-                Effect: Allow
-  IAMGetterLambdaServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: test-mymovie-GetterLambdaServiceRole
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: ''
-            Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
-      Policies:
-        - PolicyName: test-mymovie-GatewayLambdaPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action:
                   - dynamodb:GetItem
                   - dynamodb:Query
                   - dynamodb:Scan
                   - dynamodb:BatchGetItem
-                Resource: arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
-                Effect: Allow
-  IAMCommitLambdaServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: CommitLambdaServiceRole
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: ''
-            Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
-      Policies:
-        - PolicyName: test-mymovie-GatewayLambdaPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Action:
                   - dynamodb:PutItem
-#                  - sns:Subscribe
                 Resource:
                   - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
-#                  - arn:aws:sns:eu-west-1:987471261617:topic-test-mymovie-client_data
                 Effect: Allow
   IAMAPIServiceRole:
     Type: AWS::IAM::Role
@@ -264,13 +214,13 @@ Resources:
       Description: Function to Get movies list
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.get_movies
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.bid.get_movies
       Runtime: python3.8
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGetterLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   GetUserActiveBidsFunction:
@@ -280,13 +230,13 @@ Resources:
       Description: returns the list of active user bids in the system
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.get_user_active_bids
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.bid.get_user_active_bids
       Runtime: python3.8
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGetterLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   AddOrUpdateUserBidFunction:
@@ -296,8 +246,8 @@ Resources:
       Description: Add a bid on a movie or replace existing one
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.add_or_update_user_bid
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.bid.add_or_update_user_bid
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -312,8 +262,8 @@ Resources:
       Description: Cancel a bid on title
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.cancel_user_bid
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.bid.cancel_user_bid
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -328,13 +278,13 @@ Resources:
       Description: Returns the list of the active timeslots of the user
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.get_user_timeslots
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.timeslot.get_user_timeslots
       Runtime: python3.8
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGetterLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   DeleteUserTimeslotsFunction:
@@ -344,24 +294,8 @@ Resources:
       Description: cancel all the active timeslots
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.delete_user_timeslots
-      Runtime: python3.8
-      MemorySize: 1024
-      Role:
-        Fn::GetAtt:
-        - IAMGatewayLambdaServiceRole
-        - Arn
-      Timeout: 60
-  AddOrUpdateUserTimeslotsFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: test-addOrUpdateUserTimeslots
-      Description: add or update time-slots
-      Code:
-        S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.add_or_update_user_timeslots
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.timeslot.delete_user_timeslots
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -377,24 +311,8 @@ Resources:
         user preferences
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
+        S3Key: lambda_handlers.zip
       Handler: test_mymovie.add_user_timeslot
-      Runtime: python3.8
-      MemorySize: 1024
-      Role:
-        Fn::GetAtt:
-        - IAMGatewayLambdaServiceRole
-        - Arn
-      Timeout: 60
-  DeleteUserTimeslotFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: test-deleteUserTimeslot
-      Description: cancel a day from timeslots
-      Code:
-        S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.delete_user_timeslot
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -410,13 +328,13 @@ Resources:
         as available for booking
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.get_user_timeslot_preferences
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.timeslot.get_user_timeslot_preferences
       Runtime: python3.8
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGetterLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   UpdateUserTimeslotPreferencesFunction:
@@ -426,8 +344,8 @@ Resources:
       Description: update or override the default timeslot preferences
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.update_user_timeslot_preferences
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.timeslot.update_user_timeslot_preferences
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -442,13 +360,13 @@ Resources:
       Description: Returns the list of show events that are available to join
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.get_show_events
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.booking.get_show_events
       Runtime: python3.8
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGetterLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   BuyUserTicketFunction:
@@ -458,8 +376,8 @@ Resources:
       Description: Buy tickets for event for user
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.buy_user_ticket
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.booking.buy_user_ticket
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -474,13 +392,13 @@ Resources:
       Description: Returns list of all upcoming bookings
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.get_user_bookings
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.booking.get_user_bookings
       Runtime: python3.8
       MemorySize: 1024
       Role:
         Fn::GetAtt:
-        - IAMGetterLambdaServiceRole
+        - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
   DeleteUserBookingFunction:
@@ -490,8 +408,8 @@ Resources:
       Description: cancel a booking
       Code:
         S3Bucket: fof-mymovies
-        S3Key: test_mymovie.zip
-      Handler: test_mymovie.delete_user_booking
+        S3Key: lambda_handlers.zip
+      Handler: lambda_handlers.booking.delete_user_booking
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -920,86 +838,86 @@ Resources:
                   - IAMAPIServiceRole
                   - Arn
                 type: AWS
-            delete:
-              description: cancel all the active timeslots
-              summary: cancel active timeslots
-              responses:
-                '204':
-                  description: active timeslots are all canceled
-                '404':
-                  "$ref": "#/definitions/Error"
-                '500':
-                  "$ref": "#/definitions/Error"
-              security:
-              - sigv4: []
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: '200'
-                uri:
-                  Fn::Join:
-                  - ":"
-                  - - arn:aws:apigateway
-                    - Ref: AWS::Region
-                    - lambda:path/2015-03-31/functions/arn:aws:lambda
-                    - Ref: AWS::Region
-                    - Ref: AWS::AccountId
-                    - function
-                    - Fn::Join:
-                      - ''
-                      - - Ref: DeleteUserTimeslotsFunction
-                        - "/invocations"
-                passthroughBehavior: when_no_match
-                httpMethod: POST
-                contentHandling: CONVERT_TO_TEXT
-                credentials:
-                  Fn::GetAtt:
-                  - IAMAPIServiceRole
-                  - Arn
-                type: AWS
-            post:
-              description: add the time-slots for the user or override exisiting
-                ones
-              summary: add or update time-slots
-              parameters:
-              - name: timeslots
-                in: body
-                schema:
-                  "$ref": "#/definitions/TimeSlotDays"
-              responses:
-                '204':
-                  description: timeslots updated successfully for user
-                '404':
-                  "$ref": "#/definitions/Error"
-                '500':
-                  "$ref": "#/definitions/Error"
-              security:
-              - sigv4: []
-              x-amazon-apigateway-integration:
-                responses:
-                  default:
-                    statusCode: '200'
-                uri:
-                  Fn::Join:
-                  - ":"
-                  - - arn:aws:apigateway
-                    - Ref: AWS::Region
-                    - lambda:path/2015-03-31/functions/arn:aws:lambda
-                    - Ref: AWS::Region
-                    - Ref: AWS::AccountId
-                    - function
-                    - Fn::Join:
-                      - ''
-                      - - Ref: AddOrUpdateUserTimeslotsFunction
-                        - "/invocations"
-                passthroughBehavior: when_no_match
-                httpMethod: POST
-                contentHandling: CONVERT_TO_TEXT
-                credentials:
-                  Fn::GetAtt:
-                  - IAMAPIServiceRole
-                  - Arn
-                type: AWS
+#            delete:
+#              description: cancel all the active timeslots
+#              summary: cancel active timeslots
+#              responses:
+#                '204':
+#                  description: active timeslots are all canceled
+#                '404':
+#                  "$ref": "#/definitions/Error"
+#                '500':
+#                  "$ref": "#/definitions/Error"
+#              security:
+#              - sigv4: []
+#              x-amazon-apigateway-integration:
+#                responses:
+#                  default:
+#                    statusCode: '200'
+#                uri:
+#                  Fn::Join:
+#                  - ":"
+#                  - - arn:aws:apigateway
+#                    - Ref: AWS::Region
+#                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+#                    - Ref: AWS::Region
+#                    - Ref: AWS::AccountId
+#                    - function
+#                    - Fn::Join:
+#                      - ''
+#                      - - Ref: DeleteUserTimeslotsFunction
+#                        - "/invocations"
+#                passthroughBehavior: when_no_match
+#                httpMethod: POST
+#                contentHandling: CONVERT_TO_TEXT
+#                credentials:
+#                  Fn::GetAtt:
+#                  - IAMAPIServiceRole
+#                  - Arn
+#                type: AWS
+#            post:
+#              description: add the time-slots for the user or override exisiting
+#                ones
+#              summary: add or update time-slots
+#              parameters:
+#              - name: timeslots
+#                in: body
+#                schema:
+#                  "$ref": "#/definitions/TimeSlotDays"
+#              responses:
+#                '204':
+#                  description: timeslots updated successfully for user
+#                '404':
+#                  "$ref": "#/definitions/Error"
+#                '500':
+#                  "$ref": "#/definitions/Error"
+#              security:
+#              - sigv4: []
+#              x-amazon-apigateway-integration:
+#                responses:
+#                  default:
+#                    statusCode: '200'
+#                uri:
+#                  Fn::Join:
+#                  - ":"
+#                  - - arn:aws:apigateway
+#                    - Ref: AWS::Region
+#                    - lambda:path/2015-03-31/functions/arn:aws:lambda
+#                    - Ref: AWS::Region
+#                    - Ref: AWS::AccountId
+#                    - function
+#                    - Fn::Join:
+#                      - ''
+#                      - - Ref: AddOrUpdateUserTimeslotsFunction
+#                        - "/invocations"
+#                passthroughBehavior: when_no_match
+#                httpMethod: POST
+#                contentHandling: CONVERT_TO_TEXT
+#                credentials:
+#                  Fn::GetAtt:
+#                  - IAMAPIServiceRole
+#                  - Arn
+#                type: AWS
           "/{username}/timeslot":
             parameters:
             - "$ref": "#/parameters/username"
