@@ -1,12 +1,14 @@
 import boto3
+import json
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
-from api.lambda_handlers.common import ClientError, server_error_decorator, gen_success_response
-from api.lambda_handlers.common import _event_get_user_name, _event_get_bid_or_timeslot_status\
+from mymovie.api.lambda_handlers.common import ClientError, server_error_decorator, gen_success_response\
+    , gen_client_error
+from mymovie.api.lambda_handlers.common import _event_get_user_name, _event_get_bid_or_timeslot_status\
     , _event_get_is_preapp, _event_get_user_tz
 
-from api.lambda_handlers.user_option import Model, status_enum
-from api.lambda_handlers import ddb as db
+from mymovie.api.lambda_handlers.user_option import Model, status_enum
+from mymovie.api.lambda_handlers import ddb as db
 
 ts_status_state_trans = {
     (None, Model.Bid.Status.AVAILABLE): (True, "Timeslot Added"),
@@ -28,6 +30,14 @@ ts_status_state_trans = {
     # (Model.Bid.Status.EXPIRED,Model.Bid.Status.AVAILABLE) : (True, " Updated with new dates"),
     # (Model.Bid.Status.EXPIRED,Model.Bid.Status.CANCELED_BY_USER) : (False, "Bid Already Expired and Canceled"),
 }
+
+
+def calc_gen_result(exist_status_or_none, new_status):
+    (success, message) = ts_status_state_trans[(exist_status_or_none, new_status)]
+    if success:
+        return True, gen_success_response()
+    else:
+        return False, gen_client_error([message])
 
 
 @server_error_decorator
@@ -52,18 +62,20 @@ def get_user_timeslots(event, context):
 
 @server_error_decorator
 def add_user_timeslot(event, context):
+    user_id = _event_get_user_name(event)
     status = _event_get_bid_or_timeslot_status(event)
     if status != Model.Bid.Status.AVAILABLE:
         raise ClientError('timeslot status can only be AVAILABLE')
     user_tz = _event_get_user_tz(event)
     day = _event_get_timeslot_day(event)
     _validate_day(day, user_tz)
-    user_id = _event_get_user_name(event)
-    is_preapp = _event_get_is_preapp(event)
 
-    db.ddb_add_or_update_timeslot(user_id, day, user_tz, status, is_preapp)
-
-    return gen_success_response()
+    exist_status = db.fetch_timeslot_status(user_id, day)
+    success, result = calc_gen_result(exist_status, status)
+    if success:
+        is_preapp = _event_get_is_preapp(event)
+        db.ddb_add_or_update_timeslot(user_id, day, user_tz, status, is_preapp)
+    return json.dumps(result)
 
 
 def _event_get_timeslot_day(event):
@@ -81,20 +93,33 @@ def _validate_day(day, user_tz):
         raise ClientError("day too far off in the future: {}".format(day))
 
 
+@server_error_decorator
 def delete_user_timeslot(event, context):
     user_id = _event_get_user_name(event)
     day = event['pathParams']['day']
+    status = Model.Bid.Status.CANCELED_BY_USER
+    old_status = db.fetch_timeslot_status(user_id, day)
+    user_tz = _event_get_user_tz(event)
+
+    success, result = calc_gen_result(old_status, status)
+    if success:
+        db.cancel_timeslot(user_id, day)
+    return json.dumps(result)
 
 
+@server_error_decorator
 def get_user_timeslot_preferences(event, context):
-    return {
-        'statusCode': 200,
-        'body': 'body'
-    }
+    user_id = _event_get_user_name(event)
+    result = db.get_timeslot_preferences(user_id)
+    if result is None:
+        raise ClientError("no such user")
+    else:
+        return json.dumps(result)
 
 
+@server_error_decorator
 def update_user_timeslot_preferences(event, context):
-    return {
-        'statusCode': 200,
-        'body': 'body'
-    }
+    user_id = _event_get_user_name(event)
+    is_preapp = event['body']['is_preapp'] if 'is_preapp' in event['body'] else True
+    or_or_any = event['body']['or_or_any'] if 'or_or_any' in event['body'] else 'ANY'
+    db.update_timeslot_preferences(user_id, is_preapp, or_or_any)

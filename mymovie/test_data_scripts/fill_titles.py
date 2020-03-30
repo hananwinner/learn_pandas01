@@ -111,11 +111,13 @@ def fill_timeslots(event, context):
             user_id = str(uuid.uuid4())[:7]
             for j in range(ts_per_user):
                 status = status_enum[random.randint(0, len(status_enum)-1)]
+                day = datetime.strftime(datetime.now() + timedelta(days=random.randint(1, 14)),
+                                                   "%Y-%m-%d")
                 table.put_item(
                     Item={
+                        'user_id_day': "{}_{}".format(user_id, day),
                         'user_id': user_id,
-                        'day': datetime.strftime(datetime.now() + timedelta(days=random.randint(1, 14)),
-                                                   "%Y-%m-%d"),
+                        'day': day,
                         'status': status,
                         'is_preapp': True,
                         'user_id_status':

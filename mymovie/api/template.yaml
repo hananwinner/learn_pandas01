@@ -1,6 +1,11 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: MyMovie Service
+Parameters:
+  CodeVersion:
+    Type: String
+    Default: HtW1ZIDUyRK1JUsZNndmzdaRrbgZ7gsG
+
 Resources:
   RestApiCaller:
     Type: AWS::IAM::User
@@ -66,19 +71,11 @@ Resources:
       AttributeDefinitions:
       - AttributeName: title_id
         AttributeType: S
-#      - AttributeName: title_name
-#        AttributeType: S
-      - AttributeName: from
-        AttributeType: S
       - AttributeName: expired
         AttributeType: N
-#      - AttributeName: to
-#        AttributeType: S
       KeySchema:
       - AttributeName: title_id
         KeyType: HASH
-      - AttributeName: from
-        KeyType: RANGE
       GlobalSecondaryIndexes:
         - IndexName: expired-index
           KeySchema:
@@ -158,14 +155,12 @@ Resources:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       AttributeDefinitions:
-        - AttributeName: user_id
-          AttributeType: S
-        - AttributeName: status
-          AttributeType: S
         - AttributeName: user_id_status
           AttributeType: S
+        - AttributeName: user_id_day
+          AttributeType: S
       KeySchema:
-        - AttributeName: user_id
+        - AttributeName: user_id_day
           KeyType: HASH
       GlobalSecondaryIndexes:
         - IndexName: user_id_status
@@ -191,9 +186,27 @@ Resources:
       AttributeDefinitions:
         - AttributeName: show_event_id
           AttributeType: S
+        - AttributeName: status
+          AttributeType: S
       KeySchema:
         - AttributeName: show_event_id
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: status-index
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+          Projection:
+            NonKeyAttributes:
+              - title_name
+              - day
+              - tickets_purchased
+              - tickets_available
+              - ticket_price
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
   UserBookingsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -207,15 +220,31 @@ Resources:
       KeySchema:
         - AttributeName: user_id
           KeyType: HASH
+  UserTimeslotPreferencesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: test-mymovie-user-timeslot-preferences
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+
   GetMoviesFunction:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: test-getMovies
       Description: Function to Get movies list
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.bid.get_movies
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.bid.get_movies
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -229,9 +258,11 @@ Resources:
       FunctionName: test-GetUserActiveBids
       Description: returns the list of active user bids in the system
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.bid.get_user_active_bids
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.bid.get_user_active_bids
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -245,9 +276,11 @@ Resources:
       FunctionName: test-AddOrUpdateUserBid
       Description: Add a bid on a movie or replace existing one
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.bid.add_or_update_user_bid
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.bid.add_or_update_user_bid
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -261,9 +294,11 @@ Resources:
       FunctionName: test-cancelUserBid
       Description: Cancel a bid on title
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.bid.cancel_user_bid
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.bid.cancel_user_bid
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -277,9 +312,11 @@ Resources:
       FunctionName: test-getUserTimeslots
       Description: Returns the list of the active timeslots of the user
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.timeslot.get_user_timeslots
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.timeslot.get_user_timeslots
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -287,15 +324,17 @@ Resources:
         - IAMGatewayLambdaServiceRole
         - Arn
       Timeout: 60
-  DeleteUserTimeslotsFunction:
+  DeleteUserTimeslotFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: test-deleteUserTimeslots
-      Description: cancel all the active timeslots
+      FunctionName: test-deleteUserTimeslot
+      Description: delete single timeslot
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.timeslot.delete_user_timeslots
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.timeslot.delete_user_timeslot
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -310,8 +349,10 @@ Resources:
       Description: add day to timeslots or create timeslots for one day with default
         user preferences
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
       Handler: test_mymovie.add_user_timeslot
       Runtime: python3.8
       MemorySize: 1024
@@ -327,9 +368,11 @@ Resources:
       Description: get the preferences of the user for general timeslots that he sets
         as available for booking
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.timeslot.get_user_timeslot_preferences
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.timeslot.get_user_timeslot_preferences
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -343,9 +386,11 @@ Resources:
       FunctionName: test-UpdateUserTimeslotPreferences
       Description: update or override the default timeslot preferences
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.timeslot.update_user_timeslot_preferences
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.timeslot.update_user_timeslot_preferences
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -359,9 +404,11 @@ Resources:
       FunctionName: test-getShowEvents
       Description: Returns the list of show events that are available to join
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.booking.get_show_events
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.booking.get_show_events
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -375,9 +422,11 @@ Resources:
       FunctionName: test-buyUserTicket
       Description: Buy tickets for event for user
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.booking.buy_user_ticket
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.booking.buy_user_ticket
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -391,9 +440,11 @@ Resources:
       FunctionName: test-getUserBookings
       Description: Returns list of all upcoming bookings
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.booking.get_user_bookings
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.booking.get_user_bookings
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -407,9 +458,11 @@ Resources:
       FunctionName: test-DeleteUserBooking
       Description: cancel a booking
       Code:
-        S3Bucket: fof-mymovies
-        S3Key: lambda_handlers.zip
-      Handler: lambda_handlers.booking.delete_user_booking
+        S3Bucket: fof-mymovie-lambda
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.api.lambda_handlers.booking.delete_user_booking
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -566,7 +619,7 @@ Resources:
               is_preapp:
                 type: boolean
                 default: true
-              all_or_any:
+              or_or_any:
                 type: string
                 default: OR
                 enum:

@@ -1,4 +1,6 @@
 import pytz
+import traceback
+
 
 SERVER_ERROR_API_GATEWAY_REGEX = "server_error"
 CLIENT_ERROR_API_GATEWAY_REGEX = "client_error"
@@ -22,10 +24,11 @@ class ClientError(ValueError):
 def server_error_decorator(endpoint):
     def _server_error_block(*args, **kwargs):
         try:
-            return endpoint(args, kwargs)
+            return endpoint(*args, **kwargs)
         except ClientError:
             raise
         except Exception as ex:
+            traceback.print_exc()
             raise ServerErrorException(ex)
     return _server_error_block
 
