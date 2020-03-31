@@ -9,9 +9,9 @@ from mymovie.api.lambda_handlers.user_option import Model
 
 def ddb_add_or_update_bid(user_id, title_id, status, num_tickets, ticket_bid,
                           _from, to, is_preapp):
-    client = boto3.client('dynamodb')
-    client.put_item(
-        TableName='test-mymovie-user-bids',
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test-mymovie-user-bids')
+    table.put_item(
         Item={
             'user_id_title_id': "{}_{}".format(user_id, title_id),
             'user_id': user_id,

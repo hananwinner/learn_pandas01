@@ -86,7 +86,7 @@ def fill_bids(event, context):
         num_av_titles = len(title_ids)
     else:
         num_av_titles = 10
-        title_ids = [str(uuid.uuid4())[:15] for _ in range(num_av_titles)]
+        title_ids = [str(uuid.uuid4())[:7] for _ in range(num_av_titles)]
 
     if 'user_ids' in event:
         user_ids = event['user_ids']

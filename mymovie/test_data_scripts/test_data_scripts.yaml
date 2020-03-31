@@ -1,5 +1,9 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: functions to fill dynamodb tables with test data
+Parameters:
+  CodeVersion:
+    Type: String
+    Default: DNkMhc9b.OEkGtRpMo4fosYnZOF3WoMz
 Resources:
   IAMTestDataFillRole:
     Type: AWS::IAM::Role
@@ -11,7 +15,7 @@ Resources:
           - Sid: ''
             Effect: Allow
             Principal:
-              Service: lambda_handlers.amazonaws.com
+              Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
@@ -35,8 +39,10 @@ Resources:
       Runtime: python3.8
       Description: Fill Title Table with data
       Code:
-        S3Bucket: fof-mymovies
+        S3Bucket: fof-mymovie-lambda
         S3Key: fill_titles.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
       Handler: fill_titles.fill_titles
       MemorySize: 1024
       Role:
@@ -52,8 +58,10 @@ Resources:
       Runtime: python3.8
       Description: Fill Bids Table with data
       Code:
-        S3Bucket: fof-mymovies
+        S3Bucket: fof-mymovie-lambda
         S3Key: fill_titles.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
       Handler: fill_titles.fill_bids
       MemorySize: 1024
       Role:
@@ -68,8 +76,10 @@ Resources:
       Runtime: python3.8
       Description: Fill Timeslots Table with data
       Code:
-        S3Bucket: fof-mymovies
+        S3Bucket: fof-mymovie-lambda
         S3Key: fill_titles.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
       Handler: fill_titles.fill_timeslots
       MemorySize: 1024
       Role:

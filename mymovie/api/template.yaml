@@ -4,7 +4,7 @@ Description: MyMovie Service
 Parameters:
   CodeVersion:
     Type: String
-    Default: HtW1ZIDUyRK1JUsZNndmzdaRrbgZ7gsG
+    Default: l7PejJ8WKWuXUleEgcNWjl_GBMZ9SGG2
 
 Resources:
   RestApiCaller:
