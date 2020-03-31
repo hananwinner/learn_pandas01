@@ -18,15 +18,30 @@ def fill_titles(event, context):
 
     num_titles = event['num_titles'] if 'num_titles' in event else 100
     clear = event['clear'] if 'clear' in event else True
+    just_clear = event['just_clear'] if 'just_clear' in event else False
+
 
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-titles')
 
-    if clear:
+    if clear or just_clear:
         _clear(table, 'title_id')
+
+    if just_clear:
+        return
 
     _from = datetime.strftime(datetime.now(), "%Y-%m-%d")
     _to = datetime.strftime(datetime.now() + timedelta(days=14), "%Y-%m-%d")
+    if 'from' in event:
+        _from = event['from']
+    if 'to' in event:
+        _to = event['to']
+
+    if 'title_ids' in event:
+        title_ids = event['title_ids']
+        num_titles = len(title_ids)
+    else:
+        title_ids = [str(uuid.uuid4())[:7] for _ in range(num_titles)]
 
     expired_to = datetime.strftime(datetime.now() - timedelta(days=1), "%Y-%m-%d")
     expired_from = datetime.strftime(datetime.now() - timedelta(days=15), "%Y-%m-%d")
@@ -35,7 +50,7 @@ def fill_titles(event, context):
         for i in range(num_titles):
             table.put_item(
                 Item={
-                    'title_id': str(uuid.uuid4())[:7],
+                    'title_id': title_ids[i],
                     'title_name': str(uuid.uuid4())[:15],
                     'from': _from if i < num_titles/2 else expired_from,
                     'to': _to if i < num_titles/2 else expired_to,
@@ -47,28 +62,44 @@ def fill_titles(event, context):
 
 
 def fill_bids(event, context):
-    clear = event['clear'] if 'clear' in event else True
-
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-user-bids')
 
-    if clear:
+    clear = event['clear'] if 'clear' in event else True
+    just_clear = event['just_clear'] if 'just_clear' in event else False
+    if clear or just_clear:
         _clear(table, 'user_id_title_id')
+    if just_clear:
+        return
 
-    num_users = event['num_users'] if 'num_users' in event else 100
     bid_per_user = event['bid_per_user'] if 'bid_per_user' in event else 2
-    num_av_titles = 10
 
     _from = datetime.strftime(datetime.now(), "%Y-%m-%d")
     _to = datetime.strftime(datetime.now() + timedelta(days=14), "%Y-%m-%d")
+    if 'from' in event:
+        _from = event['from']
+    if 'to' in event:
+        _to = event['to']
 
-    titles = [str(uuid.uuid4())[:15] for _ in range(num_av_titles)]
+    if 'title_ids' in event:
+        title_ids = event['title_ids']
+        num_av_titles = len(title_ids)
+    else:
+        num_av_titles = 10
+        title_ids = [str(uuid.uuid4())[:15] for _ in range(num_av_titles)]
+
+    if 'user_ids' in event:
+        user_ids = event['user_ids']
+        num_users = len(user_ids)
+    else:
+        num_users = event['num_users'] if 'num_users' in event else 100
+        user_ids = [str(uuid.uuid4())[:7] for _ in range(num_users)]
 
     with table.batch_writer() as batch:
         for i in range(num_users):
-            user_id = str(uuid.uuid4())[:7]
+            user_id = user_ids[i]
             for j in range(bid_per_user):
-                title_id = titles[j % len(titles)]
+                title_id = title_ids[j % len(title_ids)]
                 table.put_item(
                     Item={
                         'user_id_title_id': "{}_{}".format(user_id, title_id),
@@ -88,19 +119,32 @@ def fill_bids(event, context):
 
 
 def fill_timeslots(event, context):
-    clear = event['clear'] if 'clear' in event else True
-
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-user-timeslots')
 
-    if clear:
-        _clear(table, 'user_id')
+    clear = event['clear'] if 'clear' in event else True
+    just_clear = event['just_clear'] if 'just_clear' in event else False
 
-    num_users = event['num_users'] if 'num_users' in event else 50
+    if clear or just_clear:
+        _clear(table, 'user_id')
+    if just_clear:
+        return
+
+    if 'user_ids' in event:
+        user_ids = event['user_ids']
+        num_users = len(user_ids)
+    else:
+        num_users = event['num_users'] if 'num_users' in event else 50
+        user_ids = [str(uuid.uuid4())[:7] for _ in range(num_users)]
+
     ts_per_user = event['ts_per_user'] if 'ts_per_user' in event else 2
 
     _from = datetime.strftime(datetime.now(), "%Y-%m-%d")
     _to = datetime.strftime(datetime.now() + timedelta(days=14), "%Y-%m-%d")
+    if 'from' in event:
+        _from = event['from']
+    if 'to' in event:
+        _to = event['to']
 
     status_enum = \
         ['AVAILABLE', 'EXPIRED']
@@ -108,7 +152,7 @@ def fill_timeslots(event, context):
 
     with table.batch_writer() as batch:
         for i in range(num_users):
-            user_id = str(uuid.uuid4())[:7]
+            user_id = user_ids[i]
             for j in range(ts_per_user):
                 status = status_enum[random.randint(0, len(status_enum)-1)]
                 day = datetime.strftime(datetime.now() + timedelta(days=random.randint(1, 14)),
