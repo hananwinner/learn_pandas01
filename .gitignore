@@ -1,4 +1,4 @@
-../.idea/modules.xml
+.idea/modules.xml
 .env
 # Compiled python modules.
 *.pyc
@@ -13,3 +13,9 @@
 
 *.csv
 *.log
+
+.idea/*
+*.zip
+pytz*
+
+
