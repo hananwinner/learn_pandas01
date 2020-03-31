@@ -95,18 +95,12 @@ def add_or_update_user_bid(event, context):
 
 @server_error_decorator
 def cancel_user_bid(event, context):
-    title_id = _event_get_title_id(event)
-    username = _event_get_user_name(event)
-    exist_bid_status = db.fetch_bid_status(username, title_id)
+    title_id = event["pathParams"]["title_id"]
+    user_id = _event_get_user_name(event)
+    exist_bid_status = db.fetch_bid_status(user_id, title_id)
     new_bid_status = Model.Bid.Status.CANCELED_BY_USER
     success, result = calc_gen_result(exist_bid_status, new_bid_status)
     if success:
-        db.ddb_add_or_update_bid(
-            username, title_id, new_bid_status,
-            event['body']['ticket_bid']['num_tickets'],
-            event['body']['ticket_bid']['ticket_bid'],
-            event['body']['from'], event['body']['to'],
-            event['body']['is_preapp']
-        )
+        db.cancel_user_bid(user_id, title_id)
     return json.dumps(result)
 

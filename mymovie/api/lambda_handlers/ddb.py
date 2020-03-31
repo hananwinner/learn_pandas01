@@ -66,17 +66,41 @@ def fetch_bid_status(user_id, title_id):
         return response['Item']['status']
 
 
+def cancel_user_bid(user_id, title_id):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test-mymovie-user-bids')
+    user_id_title_id = "{}_{}".format(user_id, title_id)
+    user_id_status = "{}_{}".format(user_id, Model.Bid.Status.CANCELED_BY_USER)
+    response = table.update_item(
+        Key={
+            'user_id_title_id': user_id_title_id
+        },
+        ReturnConsumedCapacity='NONE',
+        UpdateExpression="set #s = :s, user_id_status = :u_s",
+        ExpressionAttributeValues={
+            ':s': Model.Bid.Status.CANCELED_BY_USER,
+            ':u_s': user_id_status
+        },
+        ExpressionAttributeNames={'#s': 'status'}
+    )
+
+
 def cancel_timeslot(user_id, day):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-user-timeslots')
     user_id_day = "{}_{}".format(user_id, day)
+    user_id_status = "{}_{}".format(user_id, Model.Bid.Status.CANCELED_BY_USER)
     response = table.update_item(
-        Key=user_id_day,
+        Key={
+            'user_id_day': user_id_day
+        },
         ReturnConsumedCapacity='NONE',
-        UpdateExpression="set status = :s",
+        UpdateExpression="set #s = :s, user_id_status = :u_s",
         ExpressionAttributeValues={
             ':s': Model.Bid.Status.CANCELED_BY_USER,
+            ':u_s': user_id_status
         },
+        ExpressionAttributeNames={'#s': 'status'}
     )
 
 

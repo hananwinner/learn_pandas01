@@ -45,7 +45,7 @@ def gen_success_response():
 
 
 def _event_get_title_id(event):
-    return event['body']["title"]["_id"]
+    return event['body']["title"]["title_id"]
 
 
 def _event_get_user_name(event):

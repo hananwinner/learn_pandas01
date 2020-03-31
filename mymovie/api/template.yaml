@@ -4,7 +4,7 @@ Description: MyMovie Service
 Parameters:
   CodeVersion:
     Type: String
-    Default: l7PejJ8WKWuXUleEgcNWjl_GBMZ9SGG2
+    Default: wQEqO5lSY43OmRY686QMsFp82_6O0_3J
 
 Resources:
   RestApiCaller:
@@ -36,6 +36,7 @@ Resources:
                   - dynamodb:Scan
                   - dynamodb:BatchGetItem
                   - dynamodb:PutItem
+                  - dynamodb:UpdateItem
                 Resource:
                   - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
                 Effect: Allow
@@ -730,8 +731,16 @@ Resources:
                 requestTemplates:
                   application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 200
                 uri:
                   Fn::Join:
                   - ":"
@@ -764,7 +773,7 @@ Resources:
               responses:
                 '204':
                   description: Bid added successfully
-                '400':
+                '404':
                   "$ref": "#/definitions/Error"
                 '500':
                   "$ref": "#/definitions/Error"
@@ -777,7 +786,7 @@ Resources:
                   application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
                   .*client_error.*:
-                    statusCode: 400
+                    statusCode: 404
                     responseTemplates:
                       application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   .*server_error.*:
@@ -824,9 +833,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 204
                 uri:
                   Fn::Join:
                   - ":"
@@ -867,9 +886,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 200
                 uri:
                   Fn::Join:
                   - ":"
@@ -994,9 +1023,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 204
                 uri:
                   Fn::Join:
                   - ":"
@@ -1079,9 +1118,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 200
                 uri:
                   Fn::Join:
                   - ":"
@@ -1121,9 +1170,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 204
                 uri:
                   Fn::Join:
                   - ":"
@@ -1171,9 +1230,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 200
                 uri:
                   Fn::Join:
                   - ":"
@@ -1214,9 +1283,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 200
                 uri:
                   Fn::Join:
                   - ":"
@@ -1252,7 +1331,7 @@ Resources:
                   "$ref": "#/definitions/TicketBid"
                 required: true
               responses:
-                '200':
+                '204':
                   description: Succssfully booked
                   schema:
                     "$ref": "#/definitions/Booking"
@@ -1263,9 +1342,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 204
                 uri:
                   Fn::Join:
                   - ":"
@@ -1309,9 +1398,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 200
                 uri:
                   Fn::Join:
                   - ":"
@@ -1350,9 +1449,19 @@ Resources:
               security:
               - sigv4: []
               x-amazon-apigateway-integration:
+                requestTemplates:
+                  application/json: "{\"method\": \"$context.httpMethod\",\"body\" : $input.json('$'),\"headers\": {#foreach($param in $input.params().header.keySet())\"$param\": \"$util.escapeJavaScript($input.params().header.get($param))\" #if($foreach.hasNext),#end#end},\"queryParams\": {#foreach($param in $input.params().querystring.keySet())\"$param\": \"$util.escapeJavaScript($input.params().querystring.get($param))\" #if($foreach.hasNext),#end#end},\"pathParams\": {#foreach($param in $input.params().path.keySet())\"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end#end} }"
                 responses:
+                  .*client_error.*:
+                    statusCode: 404
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
+                  .*server_error.*:
+                    statusCode: 500
+                    responseTemplates:
+                      application/json: "#set ($errorMessageObj = $util.parseJson($input.path('$.errorMessage'))){\"errors\" : [  #foreach( $e in errorMessageObj.errors ) \"$e\"#if($foreach.hasNext),#end  #end ]}"
                   default:
-                    statusCode: '200'
+                    statusCode: 204
                 uri:
                   Fn::Join:
                   - ":"
