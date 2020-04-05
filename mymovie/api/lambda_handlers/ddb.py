@@ -38,9 +38,7 @@ def ddb_add_or_update_timeslot(user_id, day, user_tz, status, is_preapp):
             'user_id': user_id,
             'day': day,
             'status': status,
-            'is_preapp': is_preapp,
-            'user_id_status':
-                "{}_{}".format(user_id, status)
+            'is_preapp': is_preapp
         },
         ReturnValues='NONE',
         ReturnConsumedCapacity='NONE',
@@ -89,16 +87,14 @@ def cancel_timeslot(user_id, day):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-user-timeslots')
     user_id_day = "{}_{}".format(user_id, day)
-    user_id_status = "{}_{}".format(user_id, Model.Bid.Status.CANCELED_BY_USER)
     response = table.update_item(
         Key={
             'user_id_day': user_id_day
         },
         ReturnConsumedCapacity='NONE',
-        UpdateExpression="set #s = :s, user_id_status = :u_s",
+        UpdateExpression="set #s = :s",
         ExpressionAttributeValues={
             ':s': Model.Bid.Status.CANCELED_BY_USER,
-            ':u_s': user_id_status
         },
         ExpressionAttributeNames={'#s': 'status'}
     )

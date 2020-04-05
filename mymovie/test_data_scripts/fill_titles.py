@@ -163,10 +163,7 @@ def fill_timeslots(event, context):
                         'user_id': user_id,
                         'day': day,
                         'status': status,
-                        'is_preapp': True,
-                        'user_id_status':
-                            "{}_{}".format(user_id, status)
-                    },
+                        'is_preapp': True},
                     ReturnValues='NONE',
                     ReturnConsumedCapacity='NONE',
                 )
