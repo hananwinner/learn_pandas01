@@ -1,7 +1,7 @@
 import boto3
 import json
 from datetime import datetime, timedelta
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr, Key
 from mymovie.api.lambda_handlers.common import ClientError, server_error_decorator, gen_success_response\
     , gen_client_error
 from mymovie.api.lambda_handlers.common import _event_get_user_name, _event_get_bid_or_timeslot_status\
@@ -47,15 +47,17 @@ def get_user_timeslots(event, context):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-user-timeslots')
 
-    possible_user_vals = \
-        ["{}_{}".format(user_id,status) for status in status_enum if status not in ['EXPIRED']]
+    possible_status_vals = \
+        [status for status in status_enum if status not in ['EXPIRED']]
 
     response = table.query(
-        IndexName='user_id_status',
+        IndexName='user_id',
         Select='ALL_PROJECTED_ATTRIBUTES',
         Limit=100,
         ReturnConsumedCapacity='NONE',
-        KeyConditionExpression=Key('user_id_status').is_in(possible_user_vals)
+        FilterExpression=Attr('status').is_in(possible_status_vals),
+        KeyConditionExpression=Key('user_id').eq(user_id)
+
     )
     return response['Items']
 

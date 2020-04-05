@@ -4,7 +4,7 @@ Description: MyMovie Service
 Parameters:
   CodeVersion:
     Type: String
-    Default: wQEqO5lSY43OmRY686QMsFp82_6O0_3J
+    Default: _XyDzqdLuGJ1aczocqps6fB3_FNjmvkt
 
 Resources:
   RestApiCaller:
@@ -156,7 +156,7 @@ Resources:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       AttributeDefinitions:
-        - AttributeName: user_id_status
+        - AttributeName: user_id
           AttributeType: S
         - AttributeName: user_id_day
           AttributeType: S
@@ -164,9 +164,9 @@ Resources:
         - AttributeName: user_id_day
           KeyType: HASH
       GlobalSecondaryIndexes:
-        - IndexName: user_id_status
+        - IndexName: user_id
           KeySchema:
-            - AttributeName: user_id_status
+            - AttributeName: user_id
               KeyType: HASH
           Projection:
             NonKeyAttributes:
@@ -354,7 +354,7 @@ Resources:
         S3Key: mymovie.zip
         S3ObjectVersion:
           Ref: CodeVersion
-      Handler: test_mymovie.add_user_timeslot
+      Handler: mymovie.api.lambda_handlers.timeslot.add_user_timeslot
       Runtime: python3.8
       MemorySize: 1024
       Role:
@@ -920,89 +920,6 @@ Resources:
                   - IAMAPIServiceRole
                   - Arn
                 type: AWS
-#            delete:
-#              description: cancel all the active timeslots
-#              summary: cancel active timeslots
-#              responses:
-#                '204':
-#                  description: active timeslots are all canceled
-#                '404':
-#                  "$ref": "#/definitions/Error"
-#                '500':
-#                  "$ref": "#/definitions/Error"
-#              security:
-#              - sigv4: []
-#              x-amazon-apigateway-integration:
-#                responses:
-#                  default:
-#                    statusCode: '200'
-#                uri:
-#                  Fn::Join:
-#                  - ":"
-#                  - - arn:aws:apigateway
-#                    - Ref: AWS::Region
-#                    - lambda:path/2015-03-31/functions/arn:aws:lambda
-#                    - Ref: AWS::Region
-#                    - Ref: AWS::AccountId
-#                    - function
-#                    - Fn::Join:
-#                      - ''
-#                      - - Ref: DeleteUserTimeslotsFunction
-#                        - "/invocations"
-#                passthroughBehavior: when_no_match
-#                httpMethod: POST
-#                contentHandling: CONVERT_TO_TEXT
-#                credentials:
-#                  Fn::GetAtt:
-#                  - IAMAPIServiceRole
-#                  - Arn
-#                type: AWS
-#            post:
-#              description: add the time-slots for the user or override exisiting
-#                ones
-#              summary: add or update time-slots
-#              parameters:
-#              - name: timeslots
-#                in: body
-#                schema:
-#                  "$ref": "#/definitions/TimeSlotDays"
-#              responses:
-#                '204':
-#                  description: timeslots updated successfully for user
-#                '404':
-#                  "$ref": "#/definitions/Error"
-#                '500':
-#                  "$ref": "#/definitions/Error"
-#              security:
-#              - sigv4: []
-#              x-amazon-apigateway-integration:
-#                responses:
-#                  default:
-#                    statusCode: '200'
-#                uri:
-#                  Fn::Join:
-#                  - ":"
-#                  - - arn:aws:apigateway
-#                    - Ref: AWS::Region
-#                    - lambda:path/2015-03-31/functions/arn:aws:lambda
-#                    - Ref: AWS::Region
-#                    - Ref: AWS::AccountId
-#                    - function
-#                    - Fn::Join:
-#                      - ''
-#                      - - Ref: AddOrUpdateUserTimeslotsFunction
-#                        - "/invocations"
-#                passthroughBehavior: when_no_match
-#                httpMethod: POST
-#                contentHandling: CONVERT_TO_TEXT
-#                credentials:
-#                  Fn::GetAtt:
-#                  - IAMAPIServiceRole
-#                  - Arn
-#                type: AWS
-          "/{username}/timeslot":
-            parameters:
-            - "$ref": "#/parameters/username"
             post:
               description: add day to timeslots or create timeslots for one day
                 with default user preferences
@@ -1057,7 +974,7 @@ Resources:
                   - IAMAPIServiceRole
                   - Arn
                 type: AWS
-          "/{username}/timeslot/{day}":
+          "/{username}/timeslots/{day}":
             parameters:
             - "$ref": "#/parameters/username"
             - "$ref": "#/parameters/day"
@@ -1557,7 +1474,7 @@ Resources:
     - ApiGatewayAccount
     Properties:
       DeploymentId:
-        Ref: RestAPIDeployment
+        Ref: RestAPIDeployment3
       MethodSettings:
       - DataTraceEnabled: true
         HttpMethod: "*"
@@ -1565,12 +1482,12 @@ Resources:
         ResourcePath: "/*"
       RestApiId:
         Ref: MyMovieRestApi
-      StageName: dev5
-  RestAPIDeployment:
+      StageName: dev7
+  RestAPIDeployment3:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
     - MyMovieRestApi
     Properties:
       RestApiId:
         Ref: MyMovieRestApi
-      StageName: dummy
+      StageName: v1

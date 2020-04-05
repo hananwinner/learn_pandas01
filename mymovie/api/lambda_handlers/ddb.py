@@ -108,13 +108,15 @@ def fetch_timeslot_status(user_id, day):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-user-timeslots')
     user_id_day = "{}_{}".format(user_id, day)
-    response = table.get_item(
+
+    response = table.query(
         Key={
             'user_id_day': user_id_day
         },
         ReturnConsumedCapacity='NONE',
         ProjectionExpression='#s',
         ExpressionAttributeNames={'#s': 'status'}
+
     )
     if 'Item' not in response or response['Item'] is None:
         # raise ValueError("Bid for user on title not exists. user_id {} title_id {}"

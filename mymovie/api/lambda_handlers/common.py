@@ -1,6 +1,6 @@
 import pytz
 import traceback
-
+from mymovie.api.lambda_handlers.user_option import Model
 
 SERVER_ERROR_API_GATEWAY_REGEX = "server_error"
 CLIENT_ERROR_API_GATEWAY_REGEX = "client_error"
