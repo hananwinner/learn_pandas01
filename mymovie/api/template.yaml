@@ -1484,7 +1484,7 @@ Resources:
     - ApiGatewayAccount
     Properties:
       DeploymentId:
-        Ref: RestAPIDeployment3
+        Ref: RestAPIDeployment4
       MethodSettings:
       - DataTraceEnabled: true
         HttpMethod: "*"
@@ -1493,7 +1493,7 @@ Resources:
       RestApiId:
         Ref: MyMovieRestApi
       StageName: dev7
-  RestAPIDeployment3:
+  RestAPIDeployment4:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
     - MyMovieRestApi
