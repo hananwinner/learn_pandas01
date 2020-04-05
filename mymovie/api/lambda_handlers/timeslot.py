@@ -87,7 +87,7 @@ def _event_get_timeslot_day(event):
 def _validate_day(day, user_tz):
     dt_user = datetime.now(tz=user_tz)
     day_user = datetime(year=dt_user.year, month=dt_user.month, day=dt_user.day)
-    input_day = datetime.strftime(day, "%Y-%m-%d")
+    input_day = datetime.strptime(day, "%Y-%m-%d")
     future_limit = day_user + timedelta(days=365)
     if input_day < day_user:
         raise ClientError("day is in the past: {}".format(day))

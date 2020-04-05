@@ -105,7 +105,7 @@ def fetch_timeslot_status(user_id, day):
     table = dynamodb.Table('test-mymovie-user-timeslots')
     user_id_day = "{}_{}".format(user_id, day)
 
-    response = table.query(
+    response = table.get_item(
         Key={
             'user_id_day': user_id_day
         },
