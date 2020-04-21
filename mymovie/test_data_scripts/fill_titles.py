@@ -20,7 +20,6 @@ def fill_titles(event, context):
     clear = event['clear'] if 'clear' in event else True
     just_clear = event['just_clear'] if 'just_clear' in event else False
 
-
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-titles')
 
@@ -106,8 +105,8 @@ def fill_bids(event, context):
                         'user_id': user_id,
                         'title_id': title_id,
                         'status': 'AVAILABLE',
-                        'num_tickets': '1',
-                        'ticket_bid': '10',
+                        'num_tickets': 1,
+                        'ticket_bid': 10,
                         'from': _from,
                         'to': _to,
                         'is_preapp': True,
@@ -126,7 +125,7 @@ def fill_timeslots(event, context):
     just_clear = event['just_clear'] if 'just_clear' in event else False
 
     if clear or just_clear:
-        _clear(table, 'user_id')
+        _clear(table, 'user_id_day')
     if just_clear:
         return
 
@@ -139,12 +138,12 @@ def fill_timeslots(event, context):
 
     ts_per_user = event['ts_per_user'] if 'ts_per_user' in event else 2
 
-    _from = datetime.strftime(datetime.now(), "%Y-%m-%d")
-    _to = datetime.strftime(datetime.now() + timedelta(days=14), "%Y-%m-%d")
-    if 'from' in event:
-        _from = event['from']
-    if 'to' in event:
-        _to = event['to']
+    # _from = datetime.strftime(datetime.now(), "%Y-%m-%d")
+    # _to = datetime.strftime(datetime.now() + timedelta(days=14), "%Y-%m-%d")
+    # if 'from' in event:
+    #     _from = event['from']
+    # if 'to' in event:
+    #     _to = event['to']
 
     status_enum = \
         ['AVAILABLE', 'EXPIRED']
@@ -154,7 +153,8 @@ def fill_timeslots(event, context):
         for i in range(num_users):
             user_id = user_ids[i]
             for j in range(ts_per_user):
-                status = status_enum[random.randint(0, len(status_enum)-1)]
+                # status = status_enum[random.randint(0, len(status_enum)-1)]
+                status = 'AVAILABLE'
                 day = datetime.strftime(datetime.now() + timedelta(days=random.randint(1, 14)),
                                                    "%Y-%m-%d")
                 table.put_item(

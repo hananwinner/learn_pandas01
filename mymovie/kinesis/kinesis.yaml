@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description:
+Resources:
+  BidKinesisStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: test-mymovie-bids-kinesis-stream
+      RetentionPeriodHours: 1
+      ShardCount: 1
+  IAMLambdaKinesisRole:
+    Type: AWS::IAM::Role
+    DependsOn:
+      BidKinesisStream
+    Properties:
+      RoleName: LambdaKinesisRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: lambda_handlers.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyName: test-mymovie-LambdaKinesisPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - kinesis:PutRecord
+                Resource:
+                  Fn::GetAtt:
+                    - BidKinesisStream
+                    - Arn
+                Effect: Allow
+  LambdaPutBidKinesisFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-mymovie-lambda_handlers-put-bid-kinesis
+      Description: Function to put bid in kinesis
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: test_mymovie_publish_to_kinesis.zip
+      Handler: test_mymovie_publish_to_kinesis.publish_to_kinesis
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+          - IAMLambdaKinesisRole
+          - Arn
+      Timeout: 60

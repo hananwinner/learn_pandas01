@@ -18,4 +18,9 @@
 *.zip
 pytz*
 
+bin/*
+.aws-sam/*
 
+lambda_layers/*
+
+mymovie/aggregator/test/graphs/*
