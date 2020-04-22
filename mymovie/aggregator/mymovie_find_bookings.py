@@ -1,10 +1,8 @@
 import pandas as pd
 import datetime
 import time
-import matplotlib.pyplot as plt
-import numpy as np
 import logging
-from utils import make_logger
+from mymovie.aggregator.utils import make_logger
 import boto3
 import json
 
@@ -229,6 +227,7 @@ def main():
             time.sleep(_config['sleep'])
         else:
             break
+
 
     if event_handler is not None:
         event_handler.stop()

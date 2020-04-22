@@ -64,6 +64,15 @@ class AsyncSqsPublisher(threading.Thread):
             else:
                 cur_sleep = 0.2
 
+        try:
+            while True:
+                message = self._queue.get(block=False)
+                self._send(message)
+                self._queue.task_done()
+        except queue.Empty:
+            pass
+
+
     def stop(self):
         self._stop_running = True
 

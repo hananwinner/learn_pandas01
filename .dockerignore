@@ -1,0 +1,26 @@
+.idea/modules.xml
+.env
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+
+/build/
+
+*.csv
+*.log
+
+.idea/*
+*.zip
+pytz*
+
+bin/*
+.aws-sam/*
+
+lambda_layers/*
+
+mymovie/aggregator/test/graphs/*

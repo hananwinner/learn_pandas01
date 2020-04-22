@@ -10,7 +10,10 @@ class NewReservationConsumer(SimpleSqsToDynDbHandler):
         self._bids_table = dynamodb.Table('test-mymovie-user-bids')
 
     def fetch_show_details(self, title_id):
-        response = self._titles_table.get_item(title_id)
+        response = self._titles_table.get_item(
+            Key={
+                'title_id': title_id
+            })
         if 'Item' not in response:
             raise ValueError("no such show")
         else:
@@ -24,7 +27,10 @@ class NewReservationConsumer(SimpleSqsToDynDbHandler):
 
     def fetch_bid_details(self, user_id, title_id):
         user_id_title_id = "{}_{}".format(user_id, title_id)
-        response = self._bids_table.get_item(user_id_title_id)
+        response = self._bids_table.get_item(
+            Key={
+                'user_id_title_id': user_id_title_id
+            })
         if 'Item' not in response:
             raise ValueError("no such bid")
         else:

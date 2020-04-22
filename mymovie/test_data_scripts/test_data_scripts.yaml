@@ -3,7 +3,7 @@ Description: functions to fill dynamodb tables with test data
 Parameters:
   CodeVersion:
     Type: String
-    Default: sJ5jLg.9byvfd6yg08WXRBLuBa.o.UGi
+    Default: eTuNurccKCWIutqBzf49ZICK9XwQFIqu
 Resources:
   IAMTestDataFillRole:
     Type: AWS::IAM::Role

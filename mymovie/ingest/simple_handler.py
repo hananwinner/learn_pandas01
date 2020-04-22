@@ -17,7 +17,7 @@ class SimpleSqsToDynDbHandler(object):
 
     @staticmethod
     def get_data_dict(message):
-        return json.loads(message["Body"])
+        return json.loads(message.body)
 
     @staticmethod
     def delete_message(message):
@@ -33,7 +33,7 @@ class SimpleSqsToDynDbHandler(object):
                 data = self.get_data_dict(a_message)
                 try:
                     item = self.try_make_item(data)
-                    self._target_table.put_item(item)
+                    self._target_table.put_item(Item=item)
                     self.delete_message(a_message)
                 except OSError:
                     pass

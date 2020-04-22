@@ -10,7 +10,10 @@ class NewEventConsumer(SimpleSqsToDynDbHandler):
         self._titles_table = dynamodb.Table('test-mymovie-titles')
 
     def fetch_show_details(self, title_id):
-        response = self._titles_table.get_item(title_id)
+        response = self._titles_table.get_item(
+            Key={
+                'title_id': title_id
+            })
         if 'Item' not in response:
             raise ValueError("no such show")
         else:
