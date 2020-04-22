@@ -1,8 +1,5 @@
 import boto3
-import json
-import boto3
-from datetime import datetime, timedelta
-import pytz
+from datetime import datetime
 from boto3.dynamodb.conditions import Key
 from mymovie.api.lambda_handlers.user_option import Model
 

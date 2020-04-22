@@ -4,7 +4,9 @@ import logging
 import yaml
 import copy
 from mymovie.aggregator.config import Config
-
+from mymovie.aggregator.mymovie_create_input import \
+    create_file, SampleDB, UserInterestEntryMaker, CreateTimeSlotEntry
+from mymovie.aggregator.mymovie_find_bookings import read_timeslot, read_user_interest
 
 class TestBidCalculator(TestCase):
     def setUp(self):

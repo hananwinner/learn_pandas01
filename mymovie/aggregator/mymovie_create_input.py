@@ -19,7 +19,9 @@ class SampleDB(object):
 
 
 class EntryMaker(object):
-    columns = []
+    columns = ["user_id", "day"]
+
+
 
     def __init__(self, db):
         self._db = db

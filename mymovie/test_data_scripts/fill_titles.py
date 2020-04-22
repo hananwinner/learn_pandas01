@@ -53,7 +53,9 @@ def fill_titles(event, context):
                     'title_name': str(uuid.uuid4())[:15],
                     'from': _from if i < num_titles/2 else expired_from,
                     'to': _to if i < num_titles/2 else expired_to,
-                    'expired': 0 if i < num_titles/2 else 1
+                    'expired': 0 if i < num_titles/2 else 1,
+                    'year': 2020,
+                    'tickets_available': 200,
                 },
                 ReturnValues='NONE',
                 ReturnConsumedCapacity='NONE',

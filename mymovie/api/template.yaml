@@ -4,7 +4,7 @@ Description: MyMovie Service
 Parameters:
   CodeVersion:
     Type: String
-    Default: pfUdOIqOk3RWHeGjwdjtdgVB_.w9T4NV
+    Default: JVbpbepdr9haSzQLXAWfwa2BymH2psCd
 
 Resources:
   RestApiCaller:
@@ -156,6 +156,8 @@ Resources:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
       AttributeDefinitions:
+        - AttributeName: status
+          AttributeType: S
         - AttributeName: user_id
           AttributeType: S
         - AttributeName: user_id_day
@@ -177,6 +179,18 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
+        - IndexName: status
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+          Projection:
+            NonKeyAttributes:
+              - day
+              - is_preapp
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
   ShowEventTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -185,12 +199,12 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       AttributeDefinitions:
-        - AttributeName: show_event_id
+        - AttributeName: title_id_day
           AttributeType: S
         - AttributeName: status
           AttributeType: S
       KeySchema:
-        - AttributeName: show_event_id
+        - AttributeName: title_id_day
           KeyType: HASH
       GlobalSecondaryIndexes:
         - IndexName: status-index
@@ -216,10 +230,10 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       AttributeDefinitions:
-        - AttributeName: user_id
+        - AttributeName: user_id_event_id
           AttributeType: S
       KeySchema:
-        - AttributeName: user_id
+        - AttributeName: user_id_event_id
           KeyType: HASH
   UserTimeslotPreferencesTable:
     Type: AWS::DynamoDB::Table
