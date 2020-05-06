@@ -3,7 +3,7 @@ import json
 
 
 class SimpleSqsToDynDbHandler(object):
-    def __init__(self, queue_name, target_table_name, is_manual_delete=True):
+    def __init__(self, queue_name, target_table_name, is_manual_delete=False):
         sqs = boto3.resource('sqs')
         self._queue = sqs.get_queue_by_name(QueueName=queue_name)
         dynamodb = boto3.resource('dynamodb')
@@ -18,7 +18,7 @@ class SimpleSqsToDynDbHandler(object):
 
     @staticmethod
     def _get_data_dict(message):
-        return json.loads(message.body)
+        return json.loads(message["body"])
 
     @staticmethod
     def _delete_message(message):
@@ -29,6 +29,7 @@ class SimpleSqsToDynDbHandler(object):
 
     def process_messages(self, messages):
         for a_message in messages:
+            print(a_message)
             data = self._get_data_dict(a_message)
             try:
                 item = self._try_make_item(data)

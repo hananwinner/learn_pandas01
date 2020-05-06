@@ -3,7 +3,7 @@ Description: Apply outputs of the MyMovie Analytics engine
 Parameters:
   CodeVersion:
     Type: String
-    Default:
+    Default: zzCDCJV2.QkHYNVua3LhKq2gG.UxGlW3
 Resources:
   ApplyNewEventQueue:
     Type: AWS::SQS::Queue
@@ -26,39 +26,46 @@ Resources:
           Effect: Allow
           Principal:
             Service: lambda.amazonaws.com
-          Action: sts::AssumeRole
-        ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
-        Policies:
-        - PolicyName: test-mymovie-apply-consume-policy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-            - Action:
-              - sqs:ReceiveMessage
-              - sqs:DeleteMessage
-              - sqs:GetQueueAttributes
-              Resource:
-              - arn:aws:sqs:eu-west-1:987471261617:test-mymovie-apply-*
-        - PolicyName: test-mymovie-apply-to-dynamodb-policy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-            - Action:
-              - dynamodb:GetItem
-              - dynamodb:Query
-              - dynamodb:PutItem
-              - dynamodb:UpdateItem
-              Resource:
-              - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
-              Effect: Allow
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+      - PolicyName: test-mymovie-apply-consume-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Action:
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+            - sqs:GetQueueUrl
+            Resource:
+            - Fn::GetAtt:
+              - ApplyNewEventQueue
+              - Arn
+            - Fn::GetAtt:
+              - ApplyNewReservationQueue
+              - Arn
+            Effect: Allow
+      - PolicyName: test-mymovie-apply-to-dynamodb-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Action:
+            - dynamodb:GetItem
+            - dynamodb:Query
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            Resource:
+            - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
+            Effect: Allow
   ApplyNewEventFunction:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: test-mymovie-apply-new-event
       Description: Function to apply new event
       Code:
-        S3Bucket: fof-mymovies
+        S3Bucket: fof-mymovie-lambda
         S3Key: mymovie.zip
         S3ObjectVersion:
           Ref: CodeVersion
@@ -69,11 +76,11 @@ Resources:
         Fn::GetAtt:
           - ApplyLambdaRole
           - Arn
-      Timeout: 60
+      Timeout: 30
   ApplyNewEventSourceMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
-      BatchSize: 10
+      BatchSize: 1
       EventSourceArn:
         Fn::GetAtt:
           - ApplyNewEventQueue
@@ -86,7 +93,7 @@ Resources:
       FunctionName: test-mymovie-apply-new-reservation
       Description: Function to apply new reservations
       Code:
-        S3Bucket: fof-mymovies
+        S3Bucket: fof-mymovie-lambda
         S3Key: mymovie.zip
         S3ObjectVersion:
           Ref: CodeVersion
@@ -97,11 +104,11 @@ Resources:
         Fn::GetAtt:
           - ApplyLambdaRole
           - Arn
-      Timeout: 60
+      Timeout: 30
   ApplyNewReservationSourceMapping:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
-      BatchSize: 10
+      BatchSize: 1
       EventSourceArn:
         Fn::GetAtt:
           - ApplyNewReservationQueue

@@ -129,13 +129,13 @@ class BidCalculator(object):
 
     def _event_user_booked(self, user_id, day, title_id):
         self._users_booked += 1
-        day = day.strftime("%Y/%m/%d")
+        day = day.strftime("%Y-%m-%d")
         if self._event_handler:
             self._event_handler.event_user_booked(user_id, day, title_id)
         self._log.debug('event_user_booked', user_id, day, title_id)
 
     def _event_booking_canceled(self, user_id, day, title_id, reason=None):
-        day = day.strftime("%Y/%m/%d")
+        day = day.strftime("%Y-%m-%d")
         if self._event_handler:
             self._event_handler.event_booking_canceled(user_id, day, title_id)
         self._log.debug('event_booking_canceled',

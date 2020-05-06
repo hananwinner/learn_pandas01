@@ -9,7 +9,7 @@ class NewEventConsumer(SimpleSqsToDynDbHandler):
         dynamodb = boto3.resource('dynamodb')
         self._titles_table = dynamodb.Table('test-mymovie-titles')
 
-    def fetch_show_details(self, title_id):
+    def _fetch_show_details(self, title_id):
         response = self._titles_table.get_item(
             Key={
                 'title_id': title_id
@@ -30,7 +30,7 @@ class NewEventConsumer(SimpleSqsToDynDbHandler):
         day = data['day']
         num_tickets = data['num_tickets']
         bids_total = data['bids_total']
-        name, year, _from, _to, tickets_available = self.fetch_show_details(title_id)
+        name, year, _from, _to, tickets_available = self._fetch_show_details(title_id)
         status = 'AVAILABLE'
         num_tickets_remain = tickets_available - num_tickets
         if num_tickets_remain <= 0:
