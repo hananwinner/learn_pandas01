@@ -191,23 +191,10 @@ sleep_config = {
     "sleep": 300
 }
 
-sqs = boto3.resource('sqs')
-queue = sqs.get_queue_by_name(QueueName='agg-config')
-
 
 def get_sleep_config():
     global sleep_config
-    messages = queue.receive_messages()
-    if len(messages):
-        last_message = messages[-1]
-        if last_message is not None:
-            data = json.loads(last_message.body)
-            sleep_config = data
-            for a_message in messages:
-                a_message.delete()
-            return True, sleep_config
-    else:
-        return False, sleep_config
+    return False, sleep_config
 
 
 def main():

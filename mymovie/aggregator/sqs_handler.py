@@ -7,8 +7,8 @@ import queue
 
 class AggregatorAsyncSqsHandler(object):
     def __init__(self):
-        self._event_pub = AsyncSqsPublisher('new_event')
-        self._reser_pub = AsyncSqsPublisher('new_reservation')
+        self._event_pub = AsyncSqsPublisher('test-mymovie-apply-new-event')
+        self._reser_pub = AsyncSqsPublisher('test-mymovie-apply-new-reservation')
         self._event_pub.start()
         self._reser_pub.start()
 
