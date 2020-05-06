@@ -1,0 +1,16 @@
+FROM python:3
+
+WORKDIR .
+
+COPY Consumer-requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+
+COPY . .
+
+ENV PYTHONPATH=${PYTHONPATH}:/
+ENV AWS_DEFAULT_REGION=eu-west-1
+
+WORKDIR /mymovie/apply/
+
+CMD [ "python", "./new_event.py" ]
+

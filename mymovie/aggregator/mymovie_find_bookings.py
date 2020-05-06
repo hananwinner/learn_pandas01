@@ -187,8 +187,8 @@ signal.signal(signal.SIGTERM, on_termination)
 signal.signal(signal.SIGINT, on_termination)
 
 sleep_config = {
-    'start': 0,
-    # 'sleep': 300,
+    "start": 0,
+    "sleep": 300
 }
 
 sqs = boto3.resource('sqs')
@@ -218,8 +218,6 @@ def main():
     aggregator = Aggregator(df_source, event_handler)
     while True:
         changed, _config = get_sleep_config()
-        if _config['start'] == -1:
-            break
         if _config['start'] > 0:
             time.sleep(_config['start'])
         aggregator.main()
@@ -227,7 +225,6 @@ def main():
             time.sleep(_config['sleep'])
         else:
             break
-
 
     if event_handler is not None:
         event_handler.stop()

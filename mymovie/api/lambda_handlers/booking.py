@@ -1,5 +1,5 @@
 import json
-from mymovie.api.lambda_handlers import ddb as db
+from mymovie import ddb as db
 from mymovie.api.lambda_handlers.common import server_error_decorator
 from mymovie.api.lambda_handlers.common import _event_get_user_name
 

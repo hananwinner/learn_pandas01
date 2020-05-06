@@ -1,0 +1,267 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation template to create a new ECS Cluster with single Agregator instance
+Parameters:
+  EcsAmiId:
+    Type: String
+    Description: ECS AMI Id
+    Default: 'ami-09266271a2521d06f'
+  EcsInstanceType:
+    Type: String
+    Description: ECS EC2 instance type
+    Default: t2.micro
+    ConstraintDescription: must be a valid EC2 instance type.
+  KeyName:
+    Type: String
+    Description: Optional - Name of an existing EC2 KeyPair to enable SSH access to the ECS instances
+    Default: 'mymovie-agg'
+  IamRoleInstanceProfile:
+    Type: String
+    Description: Name or the Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instance
+    Default: 'arn:aws:iam::987471261617:instance-profile/test-mymovie-agg-role'
+  EcsClusterName:
+    Type: String
+    Description: ECS Cluster Name
+    Default: 'agg-cluster'
+  EcsPort:
+    Type: String
+    Description: Optional - Security Group port to open on ECS instances - defaults to port 80
+    Default: '80'
+  ElbPort:
+    Type: String
+    Description: Optional - Security Group port to open on ELB - port 80 will be open by default
+    Default: '80'
+  ElbHealthCheckTarget:
+    Type: String
+    Description: Optional - Health Check Target for ELB - defaults to HTTP:80/
+    Default: HTTP:80/
+  TargetGroupName:
+    Type: String
+    Description: The target group name
+    Default: AggTargetGroup
+  TargetType:
+    Type: String
+    Description: Optional - the ALB target group target type, defaults to ip
+    Default: 'ip'
+  SourceCidr:
+    Type: String
+    Description: Optional - CIDR/IP range for EcsPort and ElbPort - defaults to 0.0.0.0/0
+    Default: 0.0.0.0/0
+  VpcAvailabilityZones:
+    Type: CommaDelimitedList
+    Description: 'Optional - Comma-delimited list of two VPC availability zones in which to create subnets'
+    Default: ''
+  VpcCidrBlock:
+    Type: String
+    Description: Optional - CIDR/IP range for the VPC
+    Default: 10.0.0.0/16
+  SubnetCidrBlock1:
+    Type: String
+    Description: Optional - CIDR/IP range for the VPC
+    Default: 10.0.0.0/24
+  SubnetCidrBlock2:
+    Type: String
+    Description: Optional - CIDR/IP range for the VPC
+    Default: 10.0.1.0/24
+#  IsFargate:
+#    Type: String
+#    Description: Optional - Whether to launch instances and create auto scaling group.
+#    Default: 'true'
+Conditions:
+  CreateEC2LCWithKeyPair: !Not [!Equals [!Ref 'KeyName', '']]
+  UseSpecifiedVpcAvailabilityZones: !Not [!Equals [!Join ['', !Ref 'VpcAvailabilityZones'],'']]
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref 'VpcCidrBlock'
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+  PublicSubnetAz1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: !Ref 'SubnetCidrBlock1'
+      AvailabilityZone: !If
+       - UseSpecifiedVpcAvailabilityZones
+       - !Select ['0', !Ref 'VpcAvailabilityZones']
+       - !Select
+         - '0'
+         - Fn::GetAZs:
+             !Ref AWS::Region
+  PublicSubnetAz2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'Vpc'
+      CidrBlock: !Ref 'SubnetCidrBlock2'
+      AvailabilityZone: !If
+       - UseSpecifiedVpcAvailabilityZones
+       - !Select ['1', !Ref 'VpcAvailabilityZones']
+       - !Select
+         - '1'
+         - Fn::GetAZs:
+             !Ref AWS::Region
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        -
+          Key: 'Name'
+          Value: !Join [' ', ['ECS', !Ref 'EcsClusterName', '-', 'InternetGateway']]
+        -
+          Key: 'Description'
+          Value: !Join [' ', ['Created for ECS cluster', !Ref 'EcsClusterName']]
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref 'Vpc'
+      InternetGatewayId: !Ref 'InternetGateway'
+  RouteViaIgw:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'Vpc'
+      Tags:
+        -
+          Key: 'Name'
+          Value: !Join [' ', ['ECS', !Ref 'EcsClusterName', '-', 'RouteTable']]
+        -
+          Key: 'Description'
+          Value: !Join [' ', ['Created for ECS cluster', !Ref 'EcsClusterName']]
+  PublicRouteViaIgw:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref 'RouteViaIgw'
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref 'InternetGateway'
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref 'PublicSubnetAz1'
+      RouteTableId: !Ref 'RouteViaIgw'
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref 'PublicSubnetAz2'
+      RouteTableId: !Ref 'RouteViaIgw'
+  EcsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ECS Allowed Ports
+      VpcId: !Ref 'Vpc'
+      SecurityGroupIngress:
+          - IpProtocol: 'tcp'
+            FromPort: !Ref 'EcsPort'
+            ToPort: !Ref 'EcsPort'
+            CidrIp: !Ref 'SourceCidr'
+          - IpProtocol: 'tcp'
+            FromPort: '1'
+            ToPort: '65535'
+            SourceSecurityGroupId: !Ref 'AlbSecurityGroup'
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ELB Allowed Ports
+      VpcId: !Ref 'Vpc'
+      SecurityGroupIngress:
+        - IpProtocol: 'tcp'
+          FromPort: !Ref 'ElbPort'
+          ToPort: !Ref 'ElbPort'
+          CidrIp: !Ref 'SourceCidr'
+      Tags:
+        - Key: 'Name'
+          Value: !Join [' ', ['ECS', !Ref 'EcsClusterName', '-', 'ALB SecurityGroup']]
+        - Key: 'Description'
+          Value: !Join [' ', ['Created for ECS cluster', !Ref 'EcsClusterName']]
+  DefaultTargetGroup:
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
+      Properties:
+        VpcId: !Ref 'Vpc'
+        Port: !Ref 'ElbPort'
+        TargetType: !Ref 'TargetType'
+        Protocol: 'TCP'
+        Tags:
+          - Key: 'Name'
+            Value: !Join [' ', ['ECS', !Ref 'EcsClusterName', '-', 'TargetGroup']]
+          - Key: 'Description'
+            Value: !Join [' ', ['Created for ECS cluster', !Ref 'EcsClusterName']]
+  EcsElasticLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      IpAddressType: 'ipv4'
+      Scheme: 'internal'
+      Subnets:
+        - !Ref 'PublicSubnetAz1'
+        - !Ref 'PublicSubnetAz2'
+      Type: 'network'
+  LoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref 'EcsElasticLoadBalancer'
+      Port: !Ref 'ElbPort'
+      Protocol: 'TCP'
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref 'DefaultTargetGroup'
+  EcsInstanceLc:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref 'EcsAmiId'
+      InstanceType: !Ref 'EcsInstanceType'
+      AssociatePublicIpAddress: true
+      IamInstanceProfile: !Ref 'IamRoleInstanceProfile'
+      KeyName: !If [CreateEC2LCWithKeyPair, !Ref 'KeyName', !Ref 'AWS::NoValue']
+      UserData:
+        !Base64
+          'Fn::Join':
+            - ''
+            - - |
+                #!/bin/bash
+              - echo ECS_CLUSTER=
+              - !Ref EcsClusterName
+              - ' >> /etc/ecs/ecs.config'
+  EcsInstanceAsg:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Join [',', [!Ref 'PublicSubnetAz1', !Ref 'PublicSubnetAz2']]
+      LaunchConfigurationName: !Ref 'EcsInstanceLc'
+      MinSize: '0'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+  AggregatorCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref EcsClusterName
+  AggregatorTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: 'Aggregator'
+          Image: '987471261617.dkr.ecr.eu-west-1.amazonaws.com/aggregator'
+          Cpu: '10'
+          MemoryReservation: '128'
+          PortMappings:
+            - ContainerPort: !Ref EcsPort
+              HostPort: !Ref EcsPort
+
+
+      TaskRoleArn: 'arn:aws:iam::987471261617:role/test-mymovie-agg-role'
+      ExecutionRoleArn: 'arn:aws:iam::987471261617:role/ecsTaskExecutionRole'
+#      RequiresCompatibilities:
+#        - 'FARGATE'
+#      NetworkMode: 'awsvpc'
+  AggregatorService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref AggregatorCluster
+      DesiredCount: 1
+#      LaunchType: 'FARGATE'
+      ServiceName: 'agg-service'
+      TaskDefinition: !Ref AggregatorTask
+Outputs:
+  EcsInstanceAsgName:
+    Description: Auto Scaling Group Name for ECS Instances
+    Value: !Ref 'EcsInstanceAsg'
+  Version:
+    Description: ECS Cloudformation template version
+    Value: 3.0.0

@@ -1,11 +1,11 @@
 import boto3
 import math
-from mymovie.ingest.simple_handler import SimpleSqsToDynDbHandler
+from mymovie.apply.simple_handler import SimpleSqsToDynDbHandler
 
 
 class NewEventConsumer(SimpleSqsToDynDbHandler):
     def __init__(self):
-        super().__init__('new_event', 'test-mymovie-show-event')
+        super().__init__('test-mymovie-apply-new-event', 'test-mymovie-show-event')
         dynamodb = boto3.resource('dynamodb')
         self._titles_table = dynamodb.Table('test-mymovie-titles')
 
@@ -25,7 +25,7 @@ class NewEventConsumer(SimpleSqsToDynDbHandler):
             tickets_available = item['tickets_available']
             return name, year, _from, _to, tickets_available
 
-    def try_make_item(self, data):
+    def _try_make_item(self, data):
         title_id = data['title_id']
         day = data['day']
         num_tickets = data['num_tickets']

@@ -8,7 +8,7 @@ from mymovie.api.lambda_handlers.common import _event_get_user_name, _event_get_
     , _event_get_is_preapp, _event_get_user_tz
 
 from mymovie.api.lambda_handlers.user_option import Model, status_enum
-from mymovie.api.lambda_handlers import ddb as db
+from mymovie import ddb as db
 
 ts_status_state_trans = {
     (None, Model.Bid.Status.AVAILABLE): (True, "Timeslot Added"),

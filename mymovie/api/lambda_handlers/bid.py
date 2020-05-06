@@ -5,7 +5,7 @@ from boto3.dynamodb.conditions import Key
 from mymovie.api.lambda_handlers.common import ClientError, server_error_decorator, gen_success_response, gen_client_error
 from mymovie.api.lambda_handlers.common import _event_get_user_name, _event_get_bid_or_timeslot_status, _event_get_title_id
 from mymovie.api.lambda_handlers.user_option import Model
-from mymovie.api.lambda_handlers import ddb as db
+from mymovie import ddb as db
 
 
 def validate_title_not_expired(title_id):

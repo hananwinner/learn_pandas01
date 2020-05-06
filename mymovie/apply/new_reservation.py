@@ -1,10 +1,11 @@
 import boto3
-import math
-from mymovie.ingest.simple_handler import SimpleSqsToDynDbHandler
+from mymovie.apply.simple_handler import SimpleSqsToDynDbHandler
+from mymovie import ddb as db
+
 
 class NewReservationConsumer(SimpleSqsToDynDbHandler):
     def __init__(self):
-        super().__init__('new_reservation', 'test-mymovie-user-bookings')
+        super().__init__('test-mymovie-apply-new-reservation', 'test-mymovie-user-bookings')
         dynamodb = boto3.resource('dynamodb')
         self._titles_table = dynamodb.Table('test-mymovie-titles')
         self._bids_table = dynamodb.Table('test-mymovie-user-bids')
@@ -39,14 +40,17 @@ class NewReservationConsumer(SimpleSqsToDynDbHandler):
                 item['is_preapp'], item['num_tickets'], item['ticket_bid']
             return is_preapp, num_tickets, ticket_bid
 
-    def try_make_item(self, data):
+    def _try_make_item(self, data):
         user_id = data['user_id']
         day = data['day']
         title_id = data['title_id']
         name, year, _from, _to, _ = self.fetch_show_details(title_id)
         is_preapp, num_tickets, ticket_bid = self.fetch_bid_details(user_id, title_id)
         status = 'BOOKED'
-        self._book_bid(user_id, title_id)
+        if not self._book_bid(user_id, title_id):
+            return None
+        if not self._book_timeslot(user_id, day):
+            return None
         event_id = '{}_{}'.format(title_id, day)
         user_id_event_id = '{}_{}'.format(user_id, event_id)
         item = {
@@ -65,28 +69,13 @@ class NewReservationConsumer(SimpleSqsToDynDbHandler):
         return item
 
     def _book_bid(self, user_id, title_id):
-        user_id_title_id = "{}_{}".format(user_id, title_id)
-        status = "BOOKED"
-        user_id_status = "{}_{}".format(user_id, status)
-        response = self._bids_table.update_item(
-            Key={
-                'user_id_title_id': user_id_title_id
-            },
-            ReturnConsumedCapacity='NONE',
-            UpdateExpression="set #s = :s, user_id_status = :u_s",
-            ExpressionAttributeValues={
-                ':s': status,
-                ':u_s': user_id_status
-            },
-            ExpressionAttributeNames={'#s': 'status'}
-        )
-        status_code = response['ResponseMetadata']['HTTPStatusCode']
-        if status_code != 200:
-            err_message = 'fail to book bid user_id_title_id {} HTTPStatusCode {}'\
-                .format(user_id_title_id, status_code)
-            print(err_message)
-            raise OSError(err_message)
+        is_updated, _ = db.change_bid_status(user_id, title_id, "BOOKED", condition_status="AVAILABLE")
+        return is_updated
 
+
+    def _book_timeslot(self, user_id, day):
+        is_updated, _ = db.change_timeslot_status(user_id, day, "BOOKED", condition_status="AVAILABLE")
+        return is_updated
 
 def main():
     NewReservationConsumer().main()

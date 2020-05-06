@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Apply outputs of the MyMovie Analytics engine
+Parameters:
+  CodeVersion:
+    Type: String
+    Default:
+Resources:
+  ApplyNewEventQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: test-mymovie-apply-new-event
+      MessageRetentionPeriod: 86400
+  ApplyNewReservationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: test-mymovie-apply-new-reservation
+      MessageRetentionPeriod: 86400
+  ApplyLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: test-mymovie-apply-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts::AssumeRole
+        ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+        Policies:
+        - PolicyName: test-mymovie-apply-consume-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Action:
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueAttributes
+              Resource:
+              - arn:aws:sqs:eu-west-1:987471261617:test-mymovie-apply-*
+        - PolicyName: test-mymovie-apply-to-dynamodb-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Action:
+              - dynamodb:GetItem
+              - dynamodb:Query
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              Resource:
+              - arn:aws:dynamodb:eu-west-1:987471261617:table/test-mymovie-*
+              Effect: Allow
+  ApplyNewEventFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-mymovie-apply-new-event
+      Description: Function to apply new event
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.apply.lambda_handler.handle_events
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+          - ApplyLambdaRole
+          - Arn
+      Timeout: 60
+  ApplyNewEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      EventSourceArn:
+        Fn::GetAtt:
+          - ApplyNewEventQueue
+          - Arn
+      FunctionName:
+        Ref: ApplyNewEventFunction
+  ApplyNewReservationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: test-mymovie-apply-new-reservation
+      Description: Function to apply new reservations
+      Code:
+        S3Bucket: fof-mymovies
+        S3Key: mymovie.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: mymovie.apply.lambda_handler.handle_reservations
+      Runtime: python3.8
+      MemorySize: 1024
+      Role:
+        Fn::GetAtt:
+          - ApplyLambdaRole
+          - Arn
+      Timeout: 60
+  ApplyNewReservationSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      EventSourceArn:
+        Fn::GetAtt:
+          - ApplyNewReservationQueue
+          - Arn
+      FunctionName:
+        Ref: ApplyNewReservationFunction
