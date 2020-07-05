@@ -4,7 +4,7 @@ Description: MyMovie Service
 Parameters:
   CodeVersion:
     Type: String
-    Default: JVbpbepdr9haSzQLXAWfwa2BymH2psCd
+    Default: VxJq66RXkTbaojxX_Ifi_xSWOTR6BRSk
 
 Resources:
   RestApiCaller:
@@ -554,6 +554,9 @@ Resources:
                 type: string
                 format: date
           TicketBid:
+            required:
+              - ticket_bid
+              - num_tickets
             properties:
               ticket_bid:
                 type: number
@@ -569,6 +572,8 @@ Resources:
             required:
             - title
             - ticket_bid
+            - from
+            - to
             properties:
               title:
                 "$ref": "#/definitions/Title"
@@ -646,7 +651,7 @@ Resources:
                 type: string
               messages:
                 type: array
-                item: string        
+                item: string
 #          Error:
 #            description: the user does not exist
 #          Error:
@@ -723,6 +728,14 @@ Resources:
             - BOOKED
             - NEED_APPROVE
             - CANCELED
+        x-amazon-apigateway-request-validators:
+          basic:
+            validateRequestBody: true
+            validateRequestParameters: true
+          params-only:
+            validateRequestBody: false
+            validateRequestParameters: true
+        x-amazon-apigateway-request-validator: basic
         paths:
           "/{username}/bids":
             parameters:
@@ -1498,7 +1511,7 @@ Resources:
     - ApiGatewayAccount
     Properties:
       DeploymentId:
-        Ref: RestAPIDeployment4
+        Ref: RestAPIDeployment
       MethodSettings:
       - DataTraceEnabled: true
         HttpMethod: "*"
@@ -1506,12 +1519,11 @@ Resources:
         ResourcePath: "/*"
       RestApiId:
         Ref: MyMovieRestApi
-      StageName: dev7
-  RestAPIDeployment4:
+      StageName: dev
+  RestAPIDeployment:
     Type: AWS::ApiGateway::Deployment
     DependsOn:
     - MyMovieRestApi
     Properties:
       RestApiId:
         Ref: MyMovieRestApi
-      StageName: v1
