@@ -5,7 +5,6 @@ Parameters:
   CodeVersion:
     Type: String
     Default: VxJq66RXkTbaojxX_Ifi_xSWOTR6BRSk
-
 Resources:
   RestApiCaller:
     Type: AWS::IAM::User

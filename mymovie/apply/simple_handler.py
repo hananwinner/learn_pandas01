@@ -1,7 +1,6 @@
 import boto3
 import json
 
-
 class SimpleSqsToDynDbHandler(object):
     def __init__(self, queue_name, target_table_name,
                  via_event_source_mapping=True):
@@ -42,7 +41,8 @@ class SimpleSqsToDynDbHandler(object):
                 if not self._wrapped_mode:
                     self._delete_message(a_message)
             except OSError:
-                pass
+                if self._wrapped_mode:
+                    raise
             except ValueError:
                 if not self._wrapped_mode:
                     self._delete_message(a_message)

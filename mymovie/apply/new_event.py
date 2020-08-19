@@ -15,24 +15,28 @@ class NewEventConsumer(SimpleSqsToDynDbHandler):
                 'title_id': title_id
             })
         if 'Item' not in response:
-            raise ValueError("no such show")
+            raise ValueError("no such title")
         else:
             item = response['Item']
             name = item['title_name']
             year = item['year'] if 'year' in item else None
             _from = item['from']
             _to = item['to']
-            tickets_available = item['tickets_available']
-            return name, year, _from, _to, tickets_available
+            return name, year, _from, _to
 
     def _try_make_item(self, data):
+        '''
+        gets the title data and creates an event record
+        :param data:
+        :return:
+        '''
         title_id = data['title_id']
         day = data['day']
         num_tickets = data['num_tickets']
         bids_total = data['bids_total']
-        name, year, _from, _to, tickets_available = self._fetch_show_details(title_id)
+        name, year, _from, _to = self._fetch_show_details(title_id)
         status = 'AVAILABLE'
-        num_tickets_remain = tickets_available - num_tickets
+        num_tickets_remain = 200 - num_tickets
         if num_tickets_remain <= 0:
             status = 'FULL'
 

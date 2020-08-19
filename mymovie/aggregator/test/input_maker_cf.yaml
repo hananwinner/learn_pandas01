@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Input maker for the new Spark-Based Analytics
+Parameters:
+  CodeVersion:
+    Type: String
+    Default: pnq6qnJpylrWfjyStW0wT12ignFyLtJS
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: fof-mymovie-agg
+  IAMInputMakerFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: mymovie-agg-InputMakerFunctionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      Policies:
+        - PolicyName: mymovie-agg-InputMakerPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: VisualEditor0
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObjectAcl
+                  - s3:GetObject
+                Resource: arn:aws:s3:::fof-mymovie-agg/*
+              - Sid: VisualEditor1
+                Effect: Allow
+                Action: s3:HeadBucket
+                Resource: "*"
+  UsersInputMakerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: mymovie-spark-users-input-maker-function
+      Code:
+        S3Bucket: fof-mymovie-lambda
+        S3Key: spark-input-maker.zip
+        S3ObjectVersion:
+          Ref: CodeVersion
+      Handler: v2_input_maker.make_users_s3_object
+      Runtime: python3.8
+      MemorySize: 128
+      Role:
+        Fn::GetAtt:
+        - IAMInputMakerFunctionRole
+        - Arn
+      Timeout: 60
+

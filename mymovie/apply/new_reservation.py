@@ -41,6 +41,14 @@ class NewReservationConsumer(SimpleSqsToDynDbHandler):
             return is_preapp, num_tickets, ticket_bid
 
     def _try_make_item(self, data):
+        '''
+        books the bid and the timeslot
+        :param data: dict with:
+        user_id
+        title_id
+        day
+        :return:
+        '''
         user_id = data['user_id']
         day = data['day']
         title_id = data['title_id']

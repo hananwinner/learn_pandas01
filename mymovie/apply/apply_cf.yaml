@@ -10,6 +10,7 @@ Resources:
     Properties:
       QueueName: test-mymovie-apply-new-event
       MessageRetentionPeriod: 86400
+      ReceiveMessageWaitTimeSeconds: 2
   ApplyNewReservationQueue:
     Type: AWS::SQS::Queue
     Properties:

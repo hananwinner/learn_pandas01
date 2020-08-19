@@ -5,6 +5,14 @@ import random
 
 
 def _clear(table, index_name):
+    '''
+    clears all items
+
+    :param table: DynamoDB table name
+    :param index_name: primary index name
+    :return: None
+
+    '''
     scan = table.scan(
         ProjectionExpression=index_name
     )
@@ -14,8 +22,47 @@ def _clear(table, index_name):
             batch.delete_item(Key=each)
 
 
-def fill_titles(event, context):
+def fill_users(event, context):
+    '''
+    fill random users from the 'user_ids' list
+    :param event: dict with:
+    'user_ids'
+    :param context:
+    :return:
+    '''
+    dynamodb= boto3.resource('dynamodb')
+    table = dynamodb.Table('test-mymovie-users')
 
+    clear = event['clear'] if 'clear' in event else True
+    just_clear = event['just_clear'] if 'just_clear' in event else False
+    if clear or just_clear:
+        _clear(table, 'user_id')
+    if just_clear:
+        return
+
+    user_ids = event['user_ids']
+    for id in user_ids:
+        table.put_item(
+            Item={
+                'user_id': id,
+            },
+            ReturnValues='NONE',
+            ReturnConsumedCapacity='NONE',
+        )
+
+
+def fill_titles(event, context):
+    '''
+    fills the titles table with titles with ids as specified,
+    and random availabilty range between the specified limits,
+    and each other movie is on expired dates
+
+    :param event:
+    'title_ids' - a list of title_ids to fill into the table
+    'from', 'to': specify range of dates within the the movies are available to watch
+    :param context:
+    :return:
+    '''
     num_titles = event['num_titles'] if 'num_titles' in event else 100
     clear = event['clear'] if 'clear' in event else True
     just_clear = event['just_clear'] if 'just_clear' in event else False
@@ -63,6 +110,16 @@ def fill_titles(event, context):
 
 
 def fill_bids(event, context):
+    '''
+    create bids on titles by users
+    at specified range, all 'AVAILABLE'
+    :param event:
+    'user_ids' - a list of user ids to fill into the table
+    'title_ids' - a list of title ids to fill into the table
+    'bid_per_user': default 2
+    :param context:
+    :return:
+    '''
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-user-bids')
 
@@ -120,6 +177,14 @@ def fill_bids(event, context):
 
 
 def fill_timeslots(event, context):
+    '''
+    create timeslots for users on specified range, all AVAILABLE
+    :param event:
+    ts_per_user - deaf. 2
+    user_ids
+    :param context:
+    :return:
+    '''
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table('test-mymovie-user-timeslots')
 
@@ -169,3 +234,37 @@ def fill_timeslots(event, context):
                     ReturnValues='NONE',
                     ReturnConsumedCapacity='NONE',
                 )
+
+def fill_shows(event, context):
+    '''
+    fill shows of movies
+    :param event:
+    :param context:
+    :return:
+    '''
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('test-mymovie-show-event')
+
+    clear = event['clear'] if 'clear' in event else True
+    just_clear = event['just_clear'] if 'just_clear' in event else False
+
+    if clear or just_clear:
+        _clear(table, 'user_id_day')
+    if just_clear:
+        return
+    title_ids = event['title_ids']
+
+
+    title_id_day = '{}_{}'.format(title_id, day)
+    item = {
+        'title_id_day': title_id_day,
+        'titld_id': title_id,
+        'title_name': name,
+        'from': _from,
+        'to': _to,
+        'year': '' if year is None else year,
+        'day': day,
+        'status': status,
+        'num_tickets_available': num_tickets_remain,
+        'ticket_price': offer_price,
+    }

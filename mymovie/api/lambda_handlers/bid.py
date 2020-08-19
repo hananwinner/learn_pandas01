@@ -85,10 +85,10 @@ def add_or_update_user_bid(event, context):
     if success:
         db.ddb_add_or_update_bid(
             username, title_id, new_bid_status,
-            event['body']['ticket_bid']['num_tickets'],
+            event['body']['ticket_bid']['num_tickets'] if 'num_tickets' in event['body']['ticket_bid'] else 1,
             event['body']['ticket_bid']['ticket_bid'],
             event['body']['from'], event['body']['to'],
-            event['body']['is_preapp']
+            event['body']['is_preapp'] if 'is_preapp' in event['body'] else True
         )
     return json.dumps(result)
 
